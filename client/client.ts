@@ -1,4 +1,4 @@
-import { poseidon1 } from "poseidon-lite";
+import { poseidon1, poseidon2 } from "poseidon-lite";
 import crypto from "crypto";
 
 const BN128_SCALAR_MOD =
@@ -39,7 +39,9 @@ function permutate(seed: bigint, arr: number[]): number[] {
 }
 
 function sampleN(seed: bigint, arr: string[], sz: number) {
-    return permutate(seed, arr).slice(0, sz);
+    const indices = [...Array(arr.length).keys()];
+    const permutedIndicesTrunc = permutate(seed, indices).slice(0, sz);
+    return permutedIndicesTrunc.map((index) => arr[index]);
 }
 
 function uniformBN128Scalar(): bigint {
@@ -57,5 +59,6 @@ console.log("selected randomness:", playerRandomness);
 console.log("randomness commitment:", randCommitment);
 
 vrfPlaceholder.forEach((roundRandomness) => {
-    console.log();
+    const seed = poseidon2([roundRandomness, playerRandomness]);
+    console.log(sampleN(seed, playerDeck, 5));
 });
