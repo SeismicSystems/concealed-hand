@@ -31,9 +31,9 @@ template ConcealedHand() {
      *       not all 5 cards were played.
      */
     signal input playerRandomness;
-    signal input cardsPlayed[5];
+    signal input cardPlayed;
 
-    // Array of "cards." cardsPlayed must contain
+    // Array of "cards" 
     var CARDS[13] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
     // Compute hash used to pick random subset of cards
@@ -41,14 +41,12 @@ template ConcealedHand() {
 
     signal permutedCards[13] <== RandomPermutate(13)(hash, CARDS);
 
-    signal prods[5][6];
-    for (var i = 0; i < 5; i++) {
-        prods[i][0] <== cardsPlayed[i];
-        for (var j = 0; j < 5; j++) {
-            prods[i][j + 1] <== prods[i][j] * permutedCards[j];
-        }
-        prods[i][5] === 0;
+    signal prods[6];
+    prods[0] <== cardsPlayed[i];
+    for (var j = 0; j < 5; j++) {
+        prods[j + 1] <== prods[j] * permutedCards[j];
     }
+    prods[5] === 0;
 
     signal circuitPlayerCommitment <== Poseidon(1)([playerRandomness]);
     playerCommitment === circuitPlayerCommitment;
