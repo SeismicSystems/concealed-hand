@@ -5,7 +5,9 @@
         "typeRoots": [
             "./node_modules/@types"
         ],
-        "strict": true
+        "strict": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true
     },
     "include": [
         "**/*.ts"
