@@ -4,13 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node client.ts"
+    "devA": "ts-node client.ts SPADES",
+    "devB": "ts-node client.ts CLUBS"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "crypto": "^1.0.1",
-    "poseidon-lite": "^0.2.0"
+    "poseidon-lite": "^0.2.0",
+    "readline-sync": "^1.4.10"
+  },
+  "devDependencies": {
+    "@types/readline-sync": "^1.4.8"
   }
 }

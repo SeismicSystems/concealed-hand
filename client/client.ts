@@ -1,30 +1,35 @@
-import { poseidon1, poseidon2 } from "poseidon-lite";
 import crypto from "crypto";
+import { poseidon1, poseidon2 } from "poseidon-lite";
+import * as readlineSync from "readline-sync";
 
-const BN128_SCALAR_MOD =
-    BigInt(
-        21888242871839275222246405745257275088548364400416034343698204186575808495617
+import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
+
+const N_ROUNDS = 3;
+const DRAW_SIZE = 5;
+
+function constructDeck(): [string[], string[]] {
+    const suit = process.argv[2];
+    if (!suit) {
+        throw new Error("Please specify suit in CLI.");
+    }
+    const validMoves = Array.from({ length: DRAW_SIZE }, (_, i) =>
+        i.toString()
     );
-const SUIT = "SPADES";
-const CARDS = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-];
-const playerDeck = CARDS.map((card) => `${card}-${SUIT}`);
-const vrfPlaceholder = Array(10)
-    .fill(0)
-    .map(() => uniformBN128Scalar());
+    const playerDeck = CARDS.map((card) => {
+        return `${suit}-${card}`;
+    });
+    return [validMoves, playerDeck];
+}
+
+function commitRand(): [bigint, bigint] {
+    console.log("== Sampling player randomness");
+    let playerRandomness = uniformBN128Scalar();
+    let randCommitment = poseidon1([playerRandomness]);
+    console.log("- Random value:", playerRandomness);
+    console.log("- Commitment:", randCommitment);
+    console.log("==");
+    return [playerRandomness, randCommitment];
+}
 
 // https://github.com/jbaylina/random_permute/blob/main/test/test.js
 function permutate(seed: bigint, arr: number[]): number[] {
@@ -52,13 +57,51 @@ function uniformBN128Scalar(): bigint {
     return sample;
 }
 
-let playerRandomness = uniformBN128Scalar();
-let randCommitment = poseidon1([playerRandomness]);
+function askValidMove(draw_size: number, validMoves: string[]): number {
+    const cardPlayed = readlineSync.question(
+        `- Choose a card to play in range [0, ${DRAW_SIZE}): `
+    );
+    if (validMoves.includes(cardPlayed)) {
+        return parseInt(cardPlayed);
+    }
+    console.error("ERROR: Invalid input");
+    return askValidMove(draw_size, validMoves);
+}
 
-console.log("selected randomness:", playerRandomness);
-console.log("randomness commitment:", randCommitment);
+function proveHonestSelect(
+    roundRandomness: bigint,
+    playerRandomness: bigint,
+    playerCommitment: bigint,
+    cardPlayed: number
+) {
+    console.log(
+        JSON.stringify({
+            playerCommitment: playerCommitment.toString(),
+            roundRandomness: roundRandomness.toString(),
+            playerRandomness: playerRandomness.toString(),
+            cardPlayed: cardPlayed,
+        })
+    );
+}
 
-vrfPlaceholder.forEach((roundRandomness) => {
-    const seed = poseidon2([roundRandomness, playerRandomness]);
-    console.log(sampleN(seed, playerDeck, 5));
-});
+function playGame() {
+    let [validMoves, playerDeck] = constructDeck();
+    let [playerRandomness, randCommit] = commitRand();
+    DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness, i) => {
+        console.log(`== Round ${i + 1}`);
+        const seed = poseidon2([roundRandomness, playerRandomness]);
+        const draw = sampleN(seed, playerDeck, DRAW_SIZE);
+        console.log(`- Draw:`, draw);
+        const cardPlayed = askValidMove(DRAW_SIZE, validMoves);
+        console.log("- Playing:", draw[cardPlayed]);
+        proveHonestSelect(
+            randCommit,
+            roundRandomness,
+            playerRandomness,
+            cardPlayed
+        );
+        console.log("==");
+    });
+}
+
+playGame();
