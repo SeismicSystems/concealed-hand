@@ -15,8 +15,9 @@ import {
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
 
+const suit = process.argv[2];
+
 function constructDeck(): [string[], string[]] {
-    const suit = process.argv[2];
     if (!suit) {
         throw new Error("Please specify suit in CLI.");
     }
@@ -78,36 +79,35 @@ function listenToCardGame(
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                if (
-                    process.argv[2] === "SPADES" &&
-                    log.args.roundIndex === 0n
-                ) {
-                    const roundRandomness = DUMMY_VRF[0];
-
-                    console.log("== Round 1");
-                    const seed = poseidon2([roundRandomness, playerRandomness]);
-                    const [drawValues, drawIndices] = sampleN(
-                        seed,
-                        playerDeck,
-                        DRAW_SIZE
-                    );
-                    console.log(`- Draw:`, drawValues);
-                    console.log(`- Indices:`, drawIndices);
-                    const [moveDrawIdx, moveDeckIdx] = askValidMove(
-                        drawIndices,
-                        validMoves
-                    );
-                    console.log(
-                        `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-                    );
-
-                    await submitDrawProof(
-                        playerCommitment,
-                        roundRandomness,
-                        playerRandomness,
-                        moveDeckIdx
-                    );
+                if (suit !== "SPADES" || log.args.roundIndex !== 0n) {
+                    return;
                 }
+
+                const roundRandomness = DUMMY_VRF[0];
+
+                console.log("== Round 1");
+                const seed = poseidon2([roundRandomness, playerRandomness]);
+                const [drawValues, drawIndices] = sampleN(
+                    seed,
+                    playerDeck,
+                    DRAW_SIZE
+                );
+                console.log(`- Draw:`, drawValues);
+                console.log(`- Indices:`, drawIndices);
+                const [moveDrawIdx, moveDeckIdx] = askValidMove(
+                    drawIndices,
+                    validMoves
+                );
+                console.log(
+                    `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+                );
+
+                await submitDrawProof(
+                    playerCommitment,
+                    roundRandomness,
+                    playerRandomness,
+                    moveDeckIdx
+                );
             });
         },
     });
@@ -118,34 +118,36 @@ function listenToCardGame(
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                if (log.args.addr != playerAddress) {
-                    const roundNumber = Number(log.args.roundIndex) + 1;
-                    const roundRandomness = DUMMY_VRF[roundNumber - 1];
-
-                    console.log(`== Round ${roundNumber}`);
-                    const seed = poseidon2([roundRandomness, playerRandomness]);
-                    const [drawValues, drawIndices] = sampleN(
-                        seed,
-                        playerDeck,
-                        DRAW_SIZE
-                    );
-                    console.log(`- Draw:`, drawValues);
-                    console.log(`- Indices:`, drawIndices);
-                    const [moveDrawIdx, moveDeckIdx] = askValidMove(
-                        drawIndices,
-                        validMoves
-                    );
-                    console.log(
-                        `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-                    );
-
-                    await submitDrawProof(
-                        playerCommitment,
-                        roundRandomness,
-                        playerRandomness,
-                        moveDeckIdx
-                    );
+                if (log.args.addr === playerAddress) {
+                    return;
                 }
+
+                const roundNumber = Number(log.args.roundIndex) + 1;
+                const roundRandomness = DUMMY_VRF[roundNumber - 1];
+
+                console.log(`== Round ${roundNumber}`);
+                const seed = poseidon2([roundRandomness, playerRandomness]);
+                const [drawValues, drawIndices] = sampleN(
+                    seed,
+                    playerDeck,
+                    DRAW_SIZE
+                );
+                console.log(`- Draw:`, drawValues);
+                console.log(`- Indices:`, drawIndices);
+                const [moveDrawIdx, moveDeckIdx] = askValidMove(
+                    drawIndices,
+                    validMoves
+                );
+                console.log(
+                    `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+                );
+
+                await submitDrawProof(
+                    playerCommitment,
+                    roundRandomness,
+                    playerRandomness,
+                    moveDeckIdx
+                );
             });
         },
     });
