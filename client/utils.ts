@@ -5,9 +5,13 @@ import {
     createWalletClient,
     getContract,
     http,
+    parseAbiItem,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
+import crypto from "crypto";
+import { BN128_SCALAR_MOD } from "./constants";
+import { poseidon1 } from "poseidon-lite";
 
 const DRAW_WASM: string = "../circuits/draw/draw.wasm";
 const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
@@ -107,6 +111,14 @@ export async function proveHonestSelect(
     return exportRes;
 }
 
+function uniformBN128Scalar(): bigint {
+    let sample;
+    do {
+        sample = BigInt(`0x${crypto.randomBytes(32).toString("hex")}`);
+    } while (sample >= BN128_SCALAR_MOD);
+    return sample;
+}
+
 /*
  * Contract values
  */
@@ -122,14 +134,44 @@ const walletClient = createWalletClient({
     transport: http(),
 });
 
-const publicClient = createPublicClient({
+export const publicClient = createPublicClient({
     chain: foundry,
     transport: http(),
 });
 
-// const nStates = getContract({
-//     abi,
-//     address: worldAddress,
-//     walletClient,
-//     publicClient,
-// });
+export const contract = getContract({
+    abi,
+    address: worldAddress,
+    walletClient,
+    publicClient,
+});
+
+export const StartRoundEvent = parseAbiItem(
+    "event StartRound(uint256 roundIndex)"
+);
+export const PlayerMoveEvent = parseAbiItem(
+    "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx)"
+);
+
+const contractCommitFunc =
+    process.argv[2] === "SPADES"
+        ? contract.write.claimPlayerA
+        : contract.write.claimPlayerB;
+
+export async function commitRand(): Promise<[bigint, bigint]> {
+    console.log("== Sampling player randomness");
+    let playerRandomness = uniformBN128Scalar();
+    let randCommitment = poseidon1([playerRandomness]);
+    console.log("- Random value:", playerRandomness);
+    console.log("- Commitment:", randCommitment);
+    console.log("==");
+
+    let res, err;
+    [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
+    if (!res || err) {
+        console.error("Error committing to randomness onchain");
+        process.exit(1);
+    }
+
+    return [playerRandomness, randCommitment];
+}
