@@ -1,3 +1,4 @@
+// @ts-ignore
 import { groth16 } from "snarkjs";
 
 const DRAW_WASM: string = "../circuits/draw/draw.wasm";
@@ -16,6 +17,11 @@ export async function handleAsync<T>(
         return [null, error];
     }
 }
+
+export type Groth16FullProveResult = {
+    proof: Groth16Proof;
+    publicSignals: any;
+};
 
 export type Groth16Proof = {
     pi_a: [string, string, string];
@@ -68,7 +74,8 @@ export async function proveHonestSelect(
         cardPlayed: cardPlayed,
     };
 
-    let proverRes, proverErr;
+    let proverRes: Groth16FullProveResult | null;
+    let proverErr;
     [proverRes, proverErr] = await handleAsync(
         groth16.fullProve(groth16Inputs, DRAW_WASM, DRAW_ZKEY)
     );
