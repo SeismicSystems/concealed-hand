@@ -77,9 +77,9 @@ function askValidMove(
 }
 
 function proveHonestSelect(
+    playerCommitment: bigint,
     roundRandomness: bigint,
     playerRandomness: bigint,
-    playerCommitment: bigint,
     cardPlayed: number
 ) {
     console.log(
