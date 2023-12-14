@@ -1,6 +1,7 @@
 // @ts-ignore
 import { groth16 } from "snarkjs";
 import {
+    Address,
     createPublicClient,
     createWalletClient,
     getContract,
@@ -12,6 +13,8 @@ import { foundry } from "viem/chains";
 import crypto from "crypto";
 import { BN128_SCALAR_MOD } from "./constants";
 import { poseidon1 } from "poseidon-lite";
+import deployment from "../contracts/out/deployment.json" assert { type: "json" };
+import CardGameABI from "../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
 
 const DRAW_WASM: string = "../circuits/draw/draw.wasm";
 const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
@@ -140,8 +143,8 @@ export const publicClient = createPublicClient({
 });
 
 export const contract = getContract({
-    abi,
-    address: worldAddress,
+    abi: CardGameABI.abi,
+    address: deployment.gameAddress as Address,
     walletClient,
     publicClient,
 });
