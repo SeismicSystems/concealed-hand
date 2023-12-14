@@ -16,6 +16,8 @@
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
-    "@types/readline-sync": "^1.4.8"
+    "@types/node": "^20.10.4",
+    "@types/readline-sync": "^1.4.8",
+    "typescript": "^5.3.3"
   }
 }
