@@ -8,6 +8,7 @@ import {
     StartRoundEvent,
     commitRand,
     contract,
+    playerAddress,
     proveHonestSelect,
     publicClient,
 } from "./utils";
@@ -100,7 +101,14 @@ function listenToCardGame(
                     console.log(
                         `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
                     );
-                    console.log("SHOULD PROVE HERE");
+
+                    const drawProof = await proveHonestSelect(
+                        randCommit,
+                        roundRandomness,
+                        playerRandomness,
+                        moveDeckIdx
+                    );
+                    await contract.write.playCard([moveDeckIdx, drawProof]);
                 }
             });
         },
@@ -112,7 +120,35 @@ function listenToCardGame(
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                // Do something
+                if (log.args.addr != playerAddress) {
+                    const roundNumber = Number(log.args.roundIndex) + 1;
+                    const roundRandomness = DUMMY_VRF[roundNumber - 1];
+
+                    console.log(`== Round ${roundNumber}`);
+                    const seed = poseidon2([roundRandomness, playerRandomness]);
+                    const [drawValues, drawIndices] = sampleN(
+                        seed,
+                        playerDeck,
+                        DRAW_SIZE
+                    );
+                    console.log(`- Draw:`, drawValues);
+                    console.log(`- Indices:`, drawIndices);
+                    const [moveDrawIdx, moveDeckIdx] = askValidMove(
+                        drawIndices,
+                        validMoves
+                    );
+                    console.log(
+                        `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+                    );
+
+                    const drawProof = await proveHonestSelect(
+                        randCommit,
+                        roundRandomness,
+                        playerRandomness,
+                        moveDeckIdx
+                    );
+                    await contract.write.playCard([moveDeckIdx, drawProof]);
+                }
             });
         },
     });

@@ -103,7 +103,6 @@ export async function proveHonestSelect(
     }
 
     let exportRes, exportErr;
-    // return exportCallDataGroth16(proverRes.proof, proverRes.publicSignals);
     [exportRes, exportErr] = await handleAsync(
         exportCallDataGroth16(proverRes.proof, proverRes.publicSignals)
     );
@@ -148,6 +147,8 @@ export const contract = getContract({
     walletClient,
     publicClient,
 });
+
+export const playerAddress = account.address;
 
 export const StartRoundEvent = parseAbiItem(
     "event StartRound(uint256 roundIndex)"
