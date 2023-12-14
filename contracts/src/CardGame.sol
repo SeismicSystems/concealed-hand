@@ -41,6 +41,7 @@ contract CardGame {
 
     event StartRound(uint256 roundIndex);
     event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx);
+    event GameEnd();
 
     constructor(
         uint256 _nRounds,
@@ -67,7 +68,7 @@ contract CardGame {
     }
 
     function claimPlayerB(uint256 randCommit) external {
-        require(A.addr == address(0), "Player B has already been claimed.");
+        require(B.addr == address(0), "Player B has already been claimed.");
         B = Player(randCommit, msg.sender, new Move[](nRounds));
         attemptStartGame();
     }
@@ -91,6 +92,12 @@ contract CardGame {
         }
     }
 
+    function attemptEndGame() internal {
+        if (currentRound >= nRounds) {
+            emit GameEnd();
+        }
+    }
+
     function playCard(
         uint256 cardIdx,
         Groth16Proof memory proof
@@ -100,6 +107,7 @@ contract CardGame {
         player.moves[currentRound].cardIdx = cardIdx;
         emit PlayerMove(currentRound, player.addr, cardIdx);
         attemptIncrementRound();
+        attemptEndGame();
     }
 
     modifier openTurn() {
