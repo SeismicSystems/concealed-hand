@@ -40,6 +40,7 @@ contract CardGame {
     IDrawVerifier drawVerifier;
 
     event StartRound(uint256 roundIndex);
+    event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx);
 
     constructor(
         uint256 _nRounds,
@@ -97,6 +98,7 @@ contract CardGame {
         Player storage player = getPlayer();
         player.moves[currentRound].hasPlayed = true;
         player.moves[currentRound].cardIdx = cardIdx;
+        emit PlayerMove(currentRound, player.addr, cardIdx);
         attemptIncrementRound();
     }
 
