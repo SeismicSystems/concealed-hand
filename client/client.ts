@@ -1,30 +1,13 @@
-import { poseidon1, poseidon2 } from "poseidon-lite";
 import crypto from "crypto";
+import { poseidon1, poseidon2 } from "poseidon-lite";
+import * as readlineSync from "readline-sync";
 
-const BN128_SCALAR_MOD =
-    BigInt(
-        21888242871839275222246405745257275088548364400416034343698204186575808495617
-    );
-const SUIT = "SPADES";
-const CARDS = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-];
-const playerDeck = CARDS.map((card) => `${card}-${SUIT}`);
-const vrfPlaceholder = Array(10)
-    .fill(0)
-    .map(() => uniformBN128Scalar());
+import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
+
+const N_ROUNDS = 3;
+const DRAW_SIZE = 5;
+const suit = process.argv[2];
+const validMoves = Array.from({length: DRAW_SIZE}, (_, i) => (i + 1).toString());
 
 // https://github.com/jbaylina/random_permute/blob/main/test/test.js
 function permutate(seed: bigint, arr: number[]): number[] {
@@ -52,13 +35,30 @@ function uniformBN128Scalar(): bigint {
     return sample;
 }
 
+function askValidMove(draw_size: Number): Number {
+    const move = readlineSync.question(
+        `Choose a card to play [1, ${DRAW_SIZE}]:`
+    );
+    if (validMoves.includes(move)) {
+        return parseInt(move);
+    }
+    console.error("ERROR: Invalid input");
+    return askValidMove(draw_size);
+}
+
 let playerRandomness = uniformBN128Scalar();
 let randCommitment = poseidon1([playerRandomness]);
 
 console.log("selected randomness:", playerRandomness);
 console.log("randomness commitment:", randCommitment);
 
-vrfPlaceholder.forEach((roundRandomness) => {
+const playerDeck = CARDS.map((card) => {
+    return `${suit}-${card}`;
+});
+
+DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness) => {
     const seed = poseidon2([roundRandomness, playerRandomness]);
-    console.log(sampleN(seed, playerDeck, 5));
+    const draw = sampleN(seed, playerDeck, DRAW_SIZE);
+    console.log("draw:", draw);
+    const move = askValidMove(DRAW_SIZE);
 });
