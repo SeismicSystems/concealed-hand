@@ -30,7 +30,7 @@ contract DummyVRF {
         _;
     }
 
-    function getRandValue(
+    function getRand(
         uint256 index
     ) external view validIndex(index) returns (uint256) {
         return PLAY_VALS[index];
