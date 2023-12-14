@@ -14,7 +14,7 @@ include "../node_modules/circomlib/circuits/poseidon.circom";
 /*
  * TODO: summary
  */
-template ConcealedHand() {
+template Draw() {
     /*
      * Public signals:
      * - playerCommitment: hash of player randomness which is posted onchain.
@@ -52,4 +52,4 @@ template ConcealedHand() {
     playerCommitment === circuitPlayerCommitment;
 }
 
-component main { public [ playerRandomness, roundRandomness ] } = ConcealedHand();
+component main { public [ playerRandomness, roundRandomness ] } = Draw();

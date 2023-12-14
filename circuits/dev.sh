@@ -10,32 +10,32 @@ PTAU=$1
 UPPER_NAME="$(tr '[:lower:]' '[:upper:]' <<< ${NAME:0:1})${NAME:1}"
 
 # Compile circuit
-circom concealed-hand/concealed-hand.circom --r1cs --wasm
+circom draw/draw.circom --r1cs --wasm
 
 # Generate proving key
-pnpm exec snarkjs groth16 setup concealed-hand.r1cs \
+pnpm exec snarkjs groth16 setup draw.r1cs \
                                $PTAU \
-                               concealed-hand.zkey
+                               draw.zkey
 
 # Generate verifying key
-pnpm exec snarkjs zkey export verificationkey concealed-hand.zkey \
-                                             concealed-hand.vkey.json
+pnpm exec snarkjs zkey export verificationkey draw.zkey \
+                                             draw.vkey.json
 
 # TODO: smoke test
 # Compute witness, used as smoke test for circuit
-# node concealed-hand_js/generate_witness.js \
-#      concealed-hand_js/concealed-hand.wasm \
-#      concealed-hand/concealed-hand.smoke.json \
-#      concealed-hand.wtns
+# node draw_js/generate_witness.js \
+#      draw_js/draw.wasm \
+#      draw/draw.smoke.json \
+#      draw.wtns
 
 # Export solidity verifier
-pnpm exec snarkjs zkey export solidityverifier concealed-hand.zkey \
-                                              ConcealedHandVerifier.sol
-sed -i '' -e 's/0.6.11;/0.8.13;/g' ConcealedHandVerifier.sol
-mv ConcealedHandVerifier.sol ../contracts/src/ConcealedHandVerifier.sol
+pnpm exec snarkjs zkey export solidityverifier draw.zkey \
+                                              DrawVerifier.sol
+sed -i '' -e 's/0.6.11;/0.8.13;/g' DrawVerifier.sol
+mv DrawVerifier.sol ../contracts/src/DrawVerifier.sol
 
 # Save proving key and witness generation script
-mv concealed-hand_js/concealed-hand.wasm concealed-hand.zkey concealed-hand/
+mv draw_js/draw.wasm draw.zkey draw/
 
 # Clean up
-rm -rf concealed-hand.vkey.json concealed-hand.wtns concealed-hand_js/ concealed-hand.r1cs
+rm -rf draw.vkey.json draw.wtns draw_js/ draw.r1cs
