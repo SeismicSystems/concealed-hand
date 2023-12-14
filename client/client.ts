@@ -58,11 +58,11 @@ function uniformBN128Scalar(): bigint {
 }
 
 function askValidMove(draw_size: number, validMoves: string[]): number {
-    const move = readlineSync.question(
+    const cardPlayed = readlineSync.question(
         `- Choose a card to play in range [0, ${DRAW_SIZE}): `
     );
-    if (validMoves.includes(move)) {
-        return parseInt(move);
+    if (validMoves.includes(cardPlayed)) {
+        return parseInt(cardPlayed);
     }
     console.error("ERROR: Invalid input");
     return askValidMove(draw_size, validMoves);
@@ -71,13 +71,17 @@ function askValidMove(draw_size: number, validMoves: string[]): number {
 function proveHonestSelect(
     roundRandomness: bigint,
     playerRandomness: bigint,
-    move: number
+    playerCommitment: bigint,
+    cardPlayed: number
 ) {
-    console.log(JSON.stringify({
-        roundRandomness: roundRandomness,
-        playerRandomness: playerRandomness,
-        move: move
-    }))
+    console.log(
+        JSON.stringify({
+            playerCommitment: playerCommitment.toString(),
+            roundRandomness: roundRandomness.toString(),
+            playerRandomness: playerRandomness.toString(),
+            cardPlayed: cardPlayed,
+        })
+    );
 }
 
 function playGame() {
@@ -88,9 +92,14 @@ function playGame() {
         const seed = poseidon2([roundRandomness, playerRandomness]);
         const draw = sampleN(seed, playerDeck, DRAW_SIZE);
         console.log(`- Draw:`, draw);
-        const move = askValidMove(DRAW_SIZE, validMoves);
-        console.log("- Playing:", draw[move]);
-        proveHonestSelect(roundRandomness, playerRandomness, move);
+        const cardPlayed = askValidMove(DRAW_SIZE, validMoves);
+        console.log("- Playing:", draw[cardPlayed]);
+        proveHonestSelect(
+            randCommit,
+            roundRandomness,
+            playerRandomness,
+            cardPlayed
+        );
         console.log("==");
     });
 }
