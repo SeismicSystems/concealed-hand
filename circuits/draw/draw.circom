@@ -19,19 +19,17 @@ template Draw() {
      * Public signals:
      * - playerCommitment: hash of player randomness which is posted onchain.
      * - roundRandomness: random value from VRF source used in one round.
+     * - cardPlayed: card (value of 1..13) which was played in-round.
      */
     signal input playerCommitment;
     signal input roundRandomness;
+    signal input cardPlayed;
 
     /*
      * Private signals:
      * - playerRandomness: player chosen random field element used every round.
-     * - cardsPlayed: list of <=5 "cards" (indices in 1..13) which player used
-     *       in round. Every 0 in cardsPlayed is a placeholder signifying that
-     *       not all 5 cards were played.
      */
     signal input playerRandomness;
-    signal input cardPlayed;
 
     // Array of "cards" 
     var CARDS[13] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -52,4 +50,5 @@ template Draw() {
     playerCommitment === circuitPlayerCommitment;
 }
 
-component main { public [ playerRandomness, roundRandomness ] } = Draw();
+component main { public [ playerRandomness, roundRandomness, cardPlayed ] } = 
+    Draw();
