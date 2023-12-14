@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
 import { poseidon1, poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 
