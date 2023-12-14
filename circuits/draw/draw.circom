@@ -7,7 +7,7 @@ Circom circuit to permute an array from a hash value.
 License
 MIT Copyright (c) 2022 Jordi Baylina
 */
-include "../permutation.circom";
+include "permutation.circom";
 
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
