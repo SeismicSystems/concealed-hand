@@ -7,9 +7,9 @@ Circom circuit to permute an array from a hash value.
 License
 MIT Copyright (c) 2022 Jordi Baylina
 */
-include "permutation.circom";
+include "../permutation.circom";
 
-include "node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
 
 /*
  * TODO: summary
@@ -42,7 +42,7 @@ template ConcealedHand() {
     signal permutedCards[13] <== RandomPermutate(13)(hash, CARDS);
 
     signal prods[6];
-    prods[0] <== cardsPlayed[i];
+    prods[0] <== cardPlayed;
     for (var j = 0; j < 5; j++) {
         prods[j + 1] <== prods[j] * permutedCards[j];
     }
