@@ -173,9 +173,38 @@ export async function commitRand(): Promise<[bigint, bigint]> {
     let res, err;
     [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
     if (!res || err) {
-        console.error("Error committing to randomness onchain: ", err);
+        console.error("Error committing to randomness onchain:", err);
         process.exit(1);
     }
 
     return [playerRandomness, randCommitment];
+}
+
+export async function submitDrawProof(
+    playerCommitment: bigint,
+    roundRandomness: bigint,
+    playerRandomness: bigint,
+    cardPlayed: number
+) {
+    const proof = await proveHonestSelect(
+        playerCommitment,
+        roundRandomness,
+        playerRandomness,
+        cardPlayed
+    );
+
+    let res, err;
+    [res, err] = await handleAsync(
+        contract.write.playCard([cardPlayed, proof])
+    );
+    if (!res || err) {
+        console.error("Error submitting to contract:", err);
+        console.error("Groth16 inputs:", {
+            playerCommitment: playerCommitment.toString(),
+            roundRandomness: roundRandomness.toString(),
+            playerRandomness: playerRandomness.toString(),
+            cardPlayed: cardPlayed,
+        });
+        process.exit(1);
+    }
 }

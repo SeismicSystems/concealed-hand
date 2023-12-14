@@ -1,5 +1,4 @@
-import crypto from "crypto";
-import { poseidon1, poseidon2 } from "poseidon-lite";
+import { poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 
 import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
@@ -9,8 +8,8 @@ import {
     commitRand,
     contract,
     playerAddress,
-    proveHonestSelect,
     publicClient,
+    submitDrawProof,
 } from "./utils";
 
 const N_ROUNDS = 3;
@@ -71,7 +70,7 @@ function listenToCardGame(
     validMoves: string[],
     playerDeck: string[],
     playerRandomness: bigint,
-    randCommit: bigint
+    playerCommitment: bigint
 ) {
     publicClient.watchEvent({
         address: contract.address,
@@ -102,13 +101,12 @@ function listenToCardGame(
                         `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
                     );
 
-                    const drawProof = await proveHonestSelect(
-                        randCommit,
+                    await submitDrawProof(
+                        playerCommitment,
                         roundRandomness,
                         playerRandomness,
                         moveDeckIdx
                     );
-                    await contract.write.playCard([moveDeckIdx, drawProof]);
                 }
             });
         },
@@ -141,13 +139,12 @@ function listenToCardGame(
                         `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
                     );
 
-                    const drawProof = await proveHonestSelect(
-                        randCommit,
+                    await submitDrawProof(
+                        playerCommitment,
                         roundRandomness,
                         playerRandomness,
                         moveDeckIdx
                     );
-                    await contract.write.playCard([moveDeckIdx, drawProof]);
                 }
             });
         },
@@ -157,31 +154,14 @@ function listenToCardGame(
 async function playGame() {
     let [validMoves, playerDeck] = constructDeck();
 
-    let [playerRandomness, randCommit] = await commitRand();
+    let [playerRandomness, playerCommitment] = await commitRand();
 
-    listenToCardGame(validMoves, playerDeck, playerRandomness, randCommit);
-
-    // DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness, i) => {
-    //     console.log(`== Round ${i + 1}`);
-    //     const seed = poseidon2([roundRandomness, playerRandomness]);
-    //     const [drawValues, drawIndices] = sampleN(seed, playerDeck, DRAW_SIZE);
-    //     console.log(`- Draw:`, drawValues);
-    //     console.log(`- Indices:`, drawIndices);
-    //     const [moveDrawIdx, moveDeckIdx] = askValidMove(
-    //         drawIndices,
-    //         validMoves
-    //     );
-    //     console.log(
-    //         `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-    //     );
-    //     proveHonestSelect(
-    //         randCommit,
-    //         roundRandomness,
-    //         playerRandomness,
-    //         moveDeckIdx
-    //     ).then((res) => console.log(res));
-    //     console.log("==");
-    // });
+    listenToCardGame(
+        validMoves,
+        playerDeck,
+        playerRandomness,
+        playerCommitment
+    );
 }
 
 playGame();
