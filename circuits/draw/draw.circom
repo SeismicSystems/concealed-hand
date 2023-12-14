@@ -40,7 +40,7 @@ template Draw() {
     signal permutedCards[13] <== RandomPermutate(13)(hash, CARDS);
 
     signal prods[6];
-    prods[0] <== cardPlayed;
+    prods[0] <== 1;
     for (var j = 0; j < 5; j++) {
         prods[j + 1] <== prods[j] * (cardPlayed - permutedCards[j]);
     }
