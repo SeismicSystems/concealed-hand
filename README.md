@@ -30,4 +30,4 @@ Players must commit to their randomness at the beginning of the game, before see
 
 Both have their costs and benefits. For the majority of cases, we strongly recommend going with #2. We've implemented both in this repository for completeness. All moves are on-chain for a dummy card game and all proofs are real. 
 
-This code is not audited and is not suited for production use.
+This code is not audited and has zero test harness. It is not suited for production use.
