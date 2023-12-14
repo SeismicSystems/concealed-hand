@@ -21,12 +21,11 @@ pnpm exec snarkjs groth16 setup draw.r1cs \
 pnpm exec snarkjs zkey export verificationkey draw.zkey \
                                              draw.vkey.json
 
-# TODO: smoke test
 # Compute witness, used as smoke test for circuit
-# node draw_js/generate_witness.js \
-#      draw_js/draw.wasm \
-#      draw/draw.smoke.json \
-#      draw.wtns
+node draw_js/generate_witness.js \
+     draw_js/draw.wasm \
+     draw/draw.smoke.json \
+     draw.wtns
 
 # Export solidity verifier
 pnpm exec snarkjs zkey export solidityverifier draw.zkey \
