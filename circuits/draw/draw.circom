@@ -50,5 +50,5 @@ template Draw() {
     playerCommitment === circuitPlayerCommitment;
 }
 
-component main { public [ playerRandomness, roundRandomness, cardPlayed ] } = 
+component main { public [ playerCommitment, roundRandomness, cardPlayed ] } = 
     Draw();
