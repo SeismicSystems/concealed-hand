@@ -43,10 +43,14 @@ function permutate(seed: bigint, arr: number[]): number[] {
     return arrCopy;
 }
 
-function sampleN(seed: bigint, arr: string[], sz: number) {
+function sampleN(
+    seed: bigint,
+    arr: string[],
+    sz: number
+): [string[], number[]] {
     const indices = [...Array(arr.length).keys()];
-    const permutedIndicesTrunc = permutate(seed, indices).slice(0, sz);
-    return permutedIndicesTrunc.map((index) => arr[index]);
+    const permuteTrunc = permutate(seed, indices).slice(0, sz);
+    return [permuteTrunc.map((idx) => arr[idx]), permuteTrunc];
 }
 
 function uniformBN128Scalar(): bigint {
@@ -57,15 +61,19 @@ function uniformBN128Scalar(): bigint {
     return sample;
 }
 
-function askValidMove(draw_size: number, validMoves: string[]): number {
+function askValidMove(
+    drawIndices: number[],
+    validMoves: string[]
+): [number, number] {
     const cardPlayed = readlineSync.question(
-        `- Choose a card to play in range [0, ${DRAW_SIZE}): `
+        `- Choose a card to play in range [0, ${drawIndices.length}): `
     );
     if (validMoves.includes(cardPlayed)) {
-        return parseInt(cardPlayed);
+        const drawIdx = parseInt(cardPlayed);
+        return [drawIdx, drawIndices[drawIdx]];
     }
     console.error("ERROR: Invalid input");
-    return askValidMove(draw_size, validMoves);
+    return askValidMove(drawIndices, validMoves);
 }
 
 function proveHonestSelect(
@@ -90,15 +98,21 @@ function playGame() {
     DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness, i) => {
         console.log(`== Round ${i + 1}`);
         const seed = poseidon2([roundRandomness, playerRandomness]);
-        const draw = sampleN(seed, playerDeck, DRAW_SIZE);
-        console.log(`- Draw:`, draw);
-        const cardPlayed = askValidMove(DRAW_SIZE, validMoves);
-        console.log("- Playing:", draw[cardPlayed]);
+        const [drawValues, drawIndices] = sampleN(seed, playerDeck, DRAW_SIZE);
+        console.log(`- Draw:`, drawValues);
+        console.log(`- Indices:`, drawIndices);
+        const [moveDrawIdx, moveDeckIdx] = askValidMove(
+            drawIndices,
+            validMoves
+        );
+        console.log(
+            `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+        );
         proveHonestSelect(
             randCommit,
             roundRandomness,
             playerRandomness,
-            cardPlayed
+            moveDeckIdx
         );
         console.log("==");
     });
