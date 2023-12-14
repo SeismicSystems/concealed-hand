@@ -68,6 +68,18 @@ function askValidMove(draw_size: number, validMoves: string[]): number {
     return askValidMove(draw_size, validMoves);
 }
 
+function proveHonestSelect(
+    roundRandomness: bigint,
+    playerRandomness: bigint,
+    move: number
+) {
+    console.log(JSON.stringify({
+        roundRandomness: roundRandomness,
+        playerRandomness: playerRandomness,
+        move: move
+    }))
+}
+
 function playGame() {
     let [validMoves, playerDeck] = constructDeck();
     let [playerRandomness, randCommit] = commitRand();
@@ -78,6 +90,7 @@ function playGame() {
         console.log(`- Draw:`, draw);
         const move = askValidMove(DRAW_SIZE, validMoves);
         console.log("- Playing:", draw[move]);
+        proveHonestSelect(roundRandomness, playerRandomness, move);
         console.log("==");
     });
 }
