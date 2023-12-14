@@ -14,7 +14,8 @@
     "crypto": "^1.0.1",
     "poseidon-lite": "^0.2.0",
     "readline-sync": "^1.4.10",
-    "snarkjs": "^0.7.2"
+    "snarkjs": "^0.7.2",
+    "viem": "^1.19.15"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",

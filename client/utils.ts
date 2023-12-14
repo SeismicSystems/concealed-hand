@@ -1,4 +1,13 @@
+// @ts-ignore
 import { groth16 } from "snarkjs";
+import {
+    createPublicClient,
+    createWalletClient,
+    getContract,
+    http,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { foundry } from "viem/chains";
 
 const DRAW_WASM: string = "../circuits/draw/draw.wasm";
 const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
@@ -16,6 +25,11 @@ export async function handleAsync<T>(
         return [null, error];
     }
 }
+
+export type Groth16FullProveResult = {
+    proof: Groth16Proof;
+    publicSignals: any;
+};
 
 export type Groth16Proof = {
     pi_a: [string, string, string];
@@ -68,7 +82,8 @@ export async function proveHonestSelect(
         cardPlayed: cardPlayed,
     };
 
-    let proverRes, proverErr;
+    let proverRes: Groth16FullProveResult | null;
+    let proverErr;
     [proverRes, proverErr] = await handleAsync(
         groth16.fullProve(groth16Inputs, DRAW_WASM, DRAW_ZKEY)
     );
@@ -91,3 +106,30 @@ export async function proveHonestSelect(
     }
     return exportRes;
 }
+
+/*
+ * Contract values
+ */
+const privateKey =
+    process.argv[2] === "SPADES"
+        ? "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+        : "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
+const account = privateKeyToAccount(privateKey);
+
+const walletClient = createWalletClient({
+    account,
+    chain: foundry,
+    transport: http(),
+});
+
+const publicClient = createPublicClient({
+    chain: foundry,
+    transport: http(),
+});
+
+// const nStates = getContract({
+//     abi,
+//     address: worldAddress,
+//     walletClient,
+//     publicClient,
+// });

@@ -3,6 +3,7 @@ import { poseidon1, poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 
 import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
+import { proveHonestSelect } from "./utils";
 
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
@@ -76,22 +77,6 @@ function askValidMove(
     return askValidMove(drawIndices, validMoves);
 }
 
-function proveHonestSelect(
-    playerCommitment: bigint,
-    roundRandomness: bigint,
-    playerRandomness: bigint,
-    cardPlayed: number
-) {
-    console.log(
-        JSON.stringify({
-            playerCommitment: playerCommitment.toString(),
-            roundRandomness: roundRandomness.toString(),
-            playerRandomness: playerRandomness.toString(),
-            cardPlayed: cardPlayed,
-        })
-    );
-}
-
 function playGame() {
     let [validMoves, playerDeck] = constructDeck();
     let [playerRandomness, randCommit] = commitRand();
@@ -113,7 +98,7 @@ function playGame() {
             roundRandomness,
             playerRandomness,
             moveDeckIdx
-        );
+        ).then(res => console.log(res));
         console.log("==");
     });
 }
