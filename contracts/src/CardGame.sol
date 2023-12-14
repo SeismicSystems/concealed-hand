@@ -16,47 +16,66 @@ interface IVerifier {
 }
 
 contract CardGame {
+    struct Move {
+        bool hasPlayed;
+        uint256 cardIdx;
+    }
     struct Player {
         uint256 randCommit;
         address addr;
+        uint256[] moves;
     }
 
     Player A;
     Player B;
     uint256 nRounds;
     uint256 currentRound;
+    uint256 deckSize;
     DummyVRF vrf;
     IVerifier verifierContract;
 
-    constructor(uint256 _nRounds, address _verifierAddress) {
+    event StartRound(uint256 roundIndex);
+
+    constructor(uint256 _nRounds, uint256 deckSize_, address _verifierAddress) {
         nRounds = _nRounds;
-        currentRound = 0;
+        deckSize = deckSize_;
 
         vrf = new DummyVRF();
         verifierContract = IVerifier(_verifierAddress);
     }
 
+    function attemptStartGame() internal {
+        if (A.addr != address(0) && B.addr != address(0)) {
+            emit StartRound(currentRound);
+        }
+    }
+
     function claimPlayerA(uint256 randCommit) external {
         require(A.addr == address(0), "Player A has already been claimed.");
-        A = Player(randCommit, msg.sender);
+        A = Player(randCommit, msg.sender, new uint256[](nRounds));
+        attemptStartGame();
     }
 
     function claimPlayerB(uint256 randCommit) external {
         require(A.addr == address(0), "Player B has already been claimed.");
-        B = Player(randCommit, msg.sender);
+        B = Player(randCommit, msg.sender, new uint256[](nRounds));
+        attemptStartGame();
     }
 
-    function playCard()
-
-    function move(uint256) public view {
-        require(
-            p1Commitment != 0,
-            "Player 1 should commit to some random field element"
-        );
-        require(
-            p2Commitment != 0,
-            "Player 2 should commit to some random field element"
-        );
-        require(msg.sender == getCurrentPlayerAddress(), "It's not your turn");
+    function getPlayer() internal view returns (Player memory) {
+        if (msg.sender == A.addr) {
+            return A;
+        }
+        if (msg.sender == B.addr) {
+            return B;
+        }
+        revert("Sender is not registered for this game.");
     }
+
+    function playCard(uint256 cardIdx) external {
+        Player memory player = getPlayer();
+        
+    }
+
+    modifier 
 }
