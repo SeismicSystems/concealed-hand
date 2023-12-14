@@ -41,6 +41,7 @@ contract CardGame {
 
     event StartRound(uint256 roundIndex);
     event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx);
+    event GameEnd();
 
     constructor(
         uint256 _nRounds,
@@ -60,16 +61,22 @@ contract CardGame {
         }
     }
 
-    function claimPlayerA(uint256 randCommit) external {
-        require(A.addr == address(0), "Player A has already been claimed.");
-        A = Player(randCommit, msg.sender, new Move[](nRounds));
+    function claimPlayer(Player storage player, uint256 randCommit_) internal {
+        require(player.addr == address(0), "Player has already been claimed.");
+        player.randCommit = randCommit_;
+        player.addr = msg.sender;
+        for (uint i = 0; i < nRounds; i++) {
+            player.moves.push(Move(false, 0));
+        }
         attemptStartGame();
     }
 
-    function claimPlayerB(uint256 randCommit) external {
-        require(A.addr == address(0), "Player B has already been claimed.");
-        B = Player(randCommit, msg.sender, new Move[](nRounds));
-        attemptStartGame();
+    function claimPlayerA(uint256 randCommit_) external {
+        claimPlayer(A, randCommit_);
+    }
+
+    function claimPlayerB(uint256 randCommit_) external {
+        claimPlayer(B, randCommit_);
     }
 
     function getPlayer() internal view returns (Player storage) {
@@ -91,6 +98,12 @@ contract CardGame {
         }
     }
 
+    function attemptEndGame() internal {
+        if (currentRound >= nRounds) {
+            emit GameEnd();
+        }
+    }
+
     function playCard(
         uint256 cardIdx,
         Groth16Proof memory proof
@@ -100,6 +113,7 @@ contract CardGame {
         player.moves[currentRound].cardIdx = cardIdx;
         emit PlayerMove(currentRound, player.addr, cardIdx);
         attemptIncrementRound();
+        attemptEndGame();
     }
 
     modifier openTurn() {

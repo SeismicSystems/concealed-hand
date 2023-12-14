@@ -7,7 +7,7 @@ MIT Copyright (c) 2022 Jordi Baylina
 */
 pragma circom 2.1.0;
 
-include "node_modules/circomlib/circuits/bitify.circom";
+include "../node_modules/circomlib/circuits/bitify.circom";
 
 function getNBits(a) {
     var b = 0;
