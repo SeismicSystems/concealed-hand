@@ -34,7 +34,7 @@ template Draw() {
     signal input cardPlayed;
 
     // Array of "cards" 
-    var CARDS[13] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+    var CARDS[13] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
     // Compute hash used to pick random subset of cards
     signal hash <== Poseidon(2)([roundRandomness, playerRandomness]);
@@ -44,7 +44,7 @@ template Draw() {
     signal prods[6];
     prods[0] <== cardPlayed;
     for (var j = 0; j < 5; j++) {
-        prods[j + 1] <== prods[j] * permutedCards[j];
+        prods[j + 1] <== prods[j] * (cardPlayed - permutedCards[j]);
     }
     prods[5] === 0;
 
