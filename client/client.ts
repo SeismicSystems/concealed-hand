@@ -6,8 +6,30 @@ import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
 
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
-const suit = process.argv[2];
-const validMoves = Array.from({length: DRAW_SIZE}, (_, i) => (i + 1).toString());
+
+function constructDeck(): [string[], string[]] {
+    const suit = process.argv[2];
+    if (!suit) {
+        throw new Error("Please specify suit in CLI.");
+    }
+    const validMoves = Array.from({ length: DRAW_SIZE }, (_, i) =>
+        i.toString()
+    );
+    const playerDeck = CARDS.map((card) => {
+        return `${suit}-${card}`;
+    });
+    return [validMoves, playerDeck];
+}
+
+function commitRand(): [bigint, bigint] {
+    console.log("== Sampling player randomness");
+    let playerRandomness = uniformBN128Scalar();
+    let randCommitment = poseidon1([playerRandomness]);
+    console.log("- Random value:", playerRandomness);
+    console.log("- Commitment:", randCommitment);
+    console.log("==");
+    return [playerRandomness, randCommitment];
+}
 
 // https://github.com/jbaylina/random_permute/blob/main/test/test.js
 function permutate(seed: bigint, arr: number[]): number[] {
@@ -35,30 +57,29 @@ function uniformBN128Scalar(): bigint {
     return sample;
 }
 
-function askValidMove(draw_size: Number): Number {
+function askValidMove(draw_size: number, validMoves: string[]): number {
     const move = readlineSync.question(
-        `Choose a card to play [1, ${DRAW_SIZE}]:`
+        `- Choose a card to play in range [0, ${DRAW_SIZE}): `
     );
     if (validMoves.includes(move)) {
         return parseInt(move);
     }
     console.error("ERROR: Invalid input");
-    return askValidMove(draw_size);
+    return askValidMove(draw_size, validMoves);
 }
 
-let playerRandomness = uniformBN128Scalar();
-let randCommitment = poseidon1([playerRandomness]);
+function playGame() {
+    let [validMoves, playerDeck] = constructDeck();
+    let [playerRandomness, randCommit] = commitRand();
+    DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness, i) => {
+        console.log(`== Round ${i + 1}`);
+        const seed = poseidon2([roundRandomness, playerRandomness]);
+        const draw = sampleN(seed, playerDeck, DRAW_SIZE);
+        console.log(`- Draw:`, draw);
+        const move = askValidMove(DRAW_SIZE, validMoves);
+        console.log("- Playing:", draw[move]);
+        console.log("==");
+    });
+}
 
-console.log("selected randomness:", playerRandomness);
-console.log("randomness commitment:", randCommitment);
-
-const playerDeck = CARDS.map((card) => {
-    return `${suit}-${card}`;
-});
-
-DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness) => {
-    const seed = poseidon2([roundRandomness, playerRandomness]);
-    const draw = sampleN(seed, playerDeck, DRAW_SIZE);
-    console.log("draw:", draw);
-    const move = askValidMove(DRAW_SIZE);
-});
+playGame();
