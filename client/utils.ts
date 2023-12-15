@@ -25,6 +25,9 @@ export const EventABIs = {
     GameEnd: parseAbiItem("event GameEnd()"),
 };
 
+/*
+ * Sets up a contract interface with Viem.
+ */
 export function contractInterfaceSetup(privKey: string): [any, any] {
     const account = privateKeyToAccount(`0x${privKey}`);
     const walletClient = createWalletClient({
@@ -59,6 +62,9 @@ export async function handleAsync<T>(
     }
 }
 
+/*
+ * Rearrange a raw Groth16 proof into the format the Solidity verifier expects.
+ */
 export async function exportCallDataGroth16(
     prf: Groth16Proof,
     pubSigs: any
@@ -82,6 +88,9 @@ export async function exportCallDataGroth16(
     };
 }
 
+/*
+ * Uniform random sample from BN128's scalar field.
+ */
 export function uniformBN128Scalar(): bigint {
     let sample;
     do {
@@ -90,7 +99,24 @@ export function uniformBN128Scalar(): bigint {
     return sample;
 }
 
-// https://github.com/jbaylina/random_permute/blob/main/test/test.js
+/*
+ * Sample <sz> values from an array by permuting it then taking the first <sz>
+ * elements. 
+ */
+export function sampleN(
+    seed: bigint,
+    arr: string[],
+    sz: number
+): [string[], number[]] {
+    const indices = [...Array(arr.length).keys()];
+    const permuteTrunc = permutate(seed, indices).slice(0, sz);
+    return [permuteTrunc.map((idx) => arr[idx]), permuteTrunc];
+}
+
+/*
+ * Permutate an array using entropy provided by <seed>. Implementation from 
+ * Jordi Baylina @ www.github.com/jbaylina/random_permute/blob/main/test/test.js
+ */
 function permutate(seed: bigint, arr: number[]): number[] {
     let arrCopy: number[] = [...arr];
     seed = seed & ((1n << 250n) - 1n);
@@ -100,14 +126,4 @@ function permutate(seed: bigint, arr: number[]): number[] {
         seed = (seed - BigInt(r)) / BigInt(i);
     }
     return arrCopy;
-}
-
-export function sampleN(
-    seed: bigint,
-    arr: string[],
-    sz: number
-): [string[], number[]] {
-    const indices = [...Array(arr.length).keys()];
-    const permuteTrunc = permutate(seed, indices).slice(0, sz);
-    return [permuteTrunc.map((idx) => arr[idx]), permuteTrunc];
 }

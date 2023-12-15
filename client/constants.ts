@@ -1,6 +1,9 @@
 export const DRAW_WASM: string = "../circuits/draw/draw.wasm";
 export const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
 
+/*
+ * Numbering for a regular deck of cards.
+ */
 export const CARDS = [
     "A",
     "2",
@@ -17,6 +20,10 @@ export const CARDS = [
     "K",
 ];
 
+/*
+ * Using these 20 values for dummy VRF outputs. These are synced with values on 
+ * the contract.
+ */
 export const DUMMY_VRF = [
     1805388630361663123383723030321434837234747686332383102784847220245518539162n,
     19826474746195237632535830192742542373544550628330123559836844048563803787249n,
@@ -40,9 +47,16 @@ export const DUMMY_VRF = [
     11146017350875199963721940307936436613051410031268524273908573452631649515732n,
 ];
 
+/*
+ * Size of BN128's scalar field.
+ */
 export const BN128_SCALAR_MOD =
     BigInt(
         21888242871839275222246405745257275088548364400416034343698204186575808495617
     );
 
+/*
+ * Anvil account private key that we use for development. Never do something
+ * like this in production.
+ */
 export const DEV_PRIVKEY = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";

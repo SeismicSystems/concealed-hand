@@ -1,6 +1,9 @@
 import { EventABIs, contractInterfaceSetup } from "./utils";
 import { DEV_PRIVKEY } from "./constants";
 
+/*
+ * Prints all DrawContract events to stdout as they come.
+ */
 let [publicClient, contract] = contractInterfaceSetup(DEV_PRIVKEY);
 Object.values(EventABIs).forEach((abi) => {
     publicClient.watchEvent({

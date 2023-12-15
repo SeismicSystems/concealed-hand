@@ -17,10 +17,11 @@ import {
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
 
+/*
+  * A player's deck is all 13 cards in their suit. A move is an index in the  
+  * range [0, 13).
+  */
 function constructDeck(suit: string): [string[], string[]] {
-    if (!suit) {
-        throw new Error("Please specify suit in CLI.");
-    }
     const validMoves = Array.from({ length: DRAW_SIZE }, (_, i) =>
         i.toString()
     );
@@ -30,6 +31,10 @@ function constructDeck(suit: string): [string[], string[]] {
     return [validMoves, playerDeck];
 }
 
+/*
+ * Samples a random value in BN128's scalar field and its corresponding 
+ * commitment. 
+ */
 function computeRand(): [bigint, bigint] {
     console.log("== Sampling player randomness");
     let playerRandomness = uniformBN128Scalar();
@@ -40,6 +45,10 @@ function computeRand(): [bigint, bigint] {
     return [playerRandomness, randCommitment];
 }
 
+/*
+ * Players must commit to their chosen randomness on-chain before the game 
+ * begins.
+ */
 async function sendRandCommitment(
     contract: any,
     suit: string,
@@ -61,6 +70,10 @@ async function sendRandCommitment(
     return [playerRandomness, randCommitment];
 }
 
+/*
+ * Computes a ZKP that attests to the statement "this card is in the draw 
+ * consistent with the round randomness and my committed randomness".
+ */
 async function proveHonestSelect(
     playerCommitment: bigint,
     roundRandomness: bigint,
@@ -97,6 +110,10 @@ async function proveHonestSelect(
     return exportRes;
 }
 
+/*
+ * Publish the chosen card (action) to the chain, along with a ZKP that it is
+ * part of the round's draw. 
+ */
 async function submitMove(
     contract: any,
     playerCommitment: bigint,
@@ -126,6 +143,9 @@ async function submitMove(
     }
 }
 
+/*
+ * Ask for player's move via CLI. 
+ */
 function askValidMove(
     drawIndices: number[],
     validMoves: string[]
@@ -141,6 +161,9 @@ function askValidMove(
     return askValidMove(drawIndices, validMoves);
 }
 
+/*
+ * Terminates the program if the game has ended.
+ */
 function checkGameEnd(roundNumber: number, nRounds: number) {
     if (roundNumber > nRounds) {
         console.log("Game has concluded.");
@@ -148,10 +171,13 @@ function checkGameEnd(roundNumber: number, nRounds: number) {
     }
 }
 
+/*
+ * A round consists of showing the player their draw and returning their chosen
+ * move.
+ */
 function playRound(
     playerDeck: string[],
     drawSize: number,
-    roundNumber: number,
     roundRandomness: bigint,
     playerRandomness: bigint,
     validMoves: string[]
@@ -166,6 +192,10 @@ function playRound(
     return moveDeckIdx;
 }
 
+/*
+ * Participate whenever the contract emits an event signaling that a round has
+ * begun. 
+ */
 function attachGameLoop(
     publicClient: any,
     contract: any,
@@ -189,7 +219,6 @@ function attachGameLoop(
                 let cardPlayed = playRound(
                     playerDeck,
                     drawSize,
-                    roundNumber,
                     roundRandomness,
                     playerRandomness,
                     validMoves
@@ -208,8 +237,10 @@ function attachGameLoop(
 }
 
 (async () => {
-    const suit = process.argv[2];
-    const privKey = process.argv[3];
+    const suit = process.argv[2], privKey = process.argv[3];
+    if (!suit || !privKey) {
+        throw new Error("Please specify suit and dev private key in CLI.");
+    }
 
     let [validMoves, playerDeck] = constructDeck(suit);
     let [publicClient, contract] = contractInterfaceSetup(privKey);
