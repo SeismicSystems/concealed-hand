@@ -25,11 +25,17 @@ contract DummyVRF {
         11146017350875199963721940307936436613051410031268524273908573452631649515732
     ];
 
+    /*
+     * Check if requested VRF index is still within the pre-generated list.
+     */
     modifier validIndex(uint256 index) {
         require(index >= 0 && index < PLAY_VALS.length, "Index out of bounds");
         _;
     }
 
+    /*
+     * Get a dummy random value from the same sample list used client-side.
+     */
     function getRand(
         uint256 index
     ) external view validIndex(index) returns (uint256) {

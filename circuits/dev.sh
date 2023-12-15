@@ -1,13 +1,11 @@
 #! /bin/bash
 
 : '
-  Boilerplate circuit compilation & smoke testing. Do not use in prod. Assumes
-  naming convention: Outputs solidity verifier in ../contracts/src and proving 
-  key in ./
-'
+  Boilerplate circuit compilation & smoke testing. Do not use in prod. Outputs 
+  solidity verifier in ../contracts/src and proving key + witness gen in out/
+  '
 
 PTAU=$1
-UPPER_NAME="$(tr '[:lower:]' '[:upper:]' <<< ${NAME:0:1})${NAME:1}"
 
 # Compile circuit
 circom draw/draw.circom --r1cs --wasm
@@ -33,8 +31,8 @@ pnpm exec snarkjs zkey export solidityverifier draw.zkey \
 sed -i '' -e 's/0.6.11;/0.8.13;/g' DrawVerifier.sol
 mv DrawVerifier.sol ../contracts/src/DrawVerifier.sol
 
-# Save proving key and witness generation script
-mv draw_js/draw.wasm draw.zkey draw/
+# Save proving key and witness generator
+mv draw_js/draw.wasm draw.zkey draw/out/
 
 # Clean up
 rm -rf draw.vkey.json draw.wtns draw_js/ draw.r1cs
