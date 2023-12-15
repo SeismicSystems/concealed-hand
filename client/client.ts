@@ -75,6 +75,11 @@ async function listenForStartRound() {
         strict: true,
         onLogs: async (logs) => {
             const roundNumber = Number(logs[0].args.roundIndex) + 1;
+            if (roundNumber > N_ROUNDS) {
+                console.log("Game is over");
+                process.exit(0);
+            }
+
             const roundRandomness = DUMMY_VRF[roundNumber - 1];
 
             console.log(`== Round ${roundNumber}`);
