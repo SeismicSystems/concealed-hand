@@ -148,9 +148,13 @@ export const contract = getContract({
     publicClient,
 });
 
-export const StartRoundEvent = parseAbiItem(
-    "event StartRound(uint256 roundIndex)"
-);
+export const EventABIs = {
+    StartRound: parseAbiItem("event StartRound(uint256 roundIndex)"),
+    PlayerMove: parseAbiItem(
+        "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx, uint256[2] proofa, uint256[2][2] proofb, uint256[2] proofc)"
+    ),
+    GameEnd: parseAbiItem("event GameEnd()"),
+};
 
 const contractCommitFunc =
     process.argv[2] === "SPADES"

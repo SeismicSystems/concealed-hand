@@ -2,7 +2,7 @@ import { poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 import { CARDS, DUMMY_VRF } from "./constants";
 import {
-    StartRoundEvent,
+    EventABIs,
     commitRand,
     contract,
     publicClient,
@@ -68,15 +68,14 @@ function askValidMove(
 }
 
 async function listenForStartRound() {
-    console.log("LISTENING FOR START ROUND");
     publicClient.watchEvent({
         address: contract.address,
-        event: StartRoundEvent,
+        event: EventABIs["StartRound"],
         strict: true,
         onLogs: async (logs) => {
             const roundNumber = Number(logs[0].args.roundIndex) + 1;
             if (roundNumber > N_ROUNDS) {
-                console.log("Game is over");
+                console.log("Game has concluded.");
                 process.exit(0);
             }
 
@@ -96,7 +95,7 @@ async function listenForStartRound() {
                 validMoves
             );
             console.log(
-                `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+                `- Playing: ${drawValues[moveDrawIdx]}`
             );
 
             await submitDrawProof(

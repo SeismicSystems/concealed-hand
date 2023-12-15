@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "devA": "pnpm tsx client.ts SPADES",
-    "devB": "pnpm tsx client.ts CLUBS"
+    "devB": "pnpm tsx client.ts CLUBS",
+    "listen": "pnpm tsx listen.ts"
   },
   "keywords": [],
   "author": "",
