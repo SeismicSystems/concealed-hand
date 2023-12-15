@@ -1,3 +1,5 @@
+import crypto from "crypto";
+import { poseidon1 } from "poseidon-lite";
 // @ts-ignore
 import { groth16 } from "snarkjs";
 import {
@@ -10,11 +12,9 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
-import crypto from "crypto";
-import { BN128_SCALAR_MOD } from "./constants";
-import { poseidon1 } from "poseidon-lite";
-import deployment from "../contracts/out/deployment.json" assert { type: "json" };
 import CardGameABI from "../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
+import deployment from "../contracts/out/deployment.json" assert { type: "json" };
+import { BN128_SCALAR_MOD } from "./constants";
 
 const DRAW_WASM: string = "../circuits/draw/draw.wasm";
 const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
@@ -148,13 +148,8 @@ export const contract = getContract({
     publicClient,
 });
 
-export const playerAddress = account.address;
-
 export const StartRoundEvent = parseAbiItem(
     "event StartRound(uint256 roundIndex)"
-);
-export const PlayerMoveEvent = parseAbiItem(
-    "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx)"
 );
 
 const contractCommitFunc =

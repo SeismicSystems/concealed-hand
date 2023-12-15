@@ -1,13 +1,10 @@
 import { poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
-
-import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
+import { CARDS, DUMMY_VRF } from "./constants";
 import {
-    PlayerMoveEvent,
     StartRoundEvent,
     commitRand,
     contract,
-    playerAddress,
     publicClient,
     submitDrawProof,
 } from "./utils";
