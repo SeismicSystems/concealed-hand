@@ -1,6 +1,7 @@
 // @ts-ignore
 import { groth16 } from "snarkjs";
 import {
+    Address,
     createPublicClient,
     createWalletClient,
     getContract,
@@ -12,6 +13,8 @@ import { foundry } from "viem/chains";
 import crypto from "crypto";
 import { BN128_SCALAR_MOD } from "./constants";
 import { poseidon1 } from "poseidon-lite";
+import deployment from "../contracts/out/deployment.json" assert { type: "json" };
+import CardGameABI from "../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
 
 const DRAW_WASM: string = "../circuits/draw/draw.wasm";
 const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
@@ -100,7 +103,6 @@ export async function proveHonestSelect(
     }
 
     let exportRes, exportErr;
-    // return exportCallDataGroth16(proverRes.proof, proverRes.publicSignals);
     [exportRes, exportErr] = await handleAsync(
         exportCallDataGroth16(proverRes.proof, proverRes.publicSignals)
     );
@@ -140,11 +142,13 @@ export const publicClient = createPublicClient({
 });
 
 export const contract = getContract({
-    abi,
-    address: worldAddress,
+    abi: CardGameABI.abi,
+    address: deployment.gameAddress as Address,
     walletClient,
     publicClient,
 });
+
+export const playerAddress = account.address;
 
 export const StartRoundEvent = parseAbiItem(
     "event StartRound(uint256 roundIndex)"
@@ -169,9 +173,38 @@ export async function commitRand(): Promise<[bigint, bigint]> {
     let res, err;
     [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
     if (!res || err) {
-        console.error("Error committing to randomness onchain");
+        console.error("Error committing to randomness onchain:", err);
         process.exit(1);
     }
 
     return [playerRandomness, randCommitment];
+}
+
+export async function submitDrawProof(
+    playerCommitment: bigint,
+    roundRandomness: bigint,
+    playerRandomness: bigint,
+    cardPlayed: number
+) {
+    const proof = await proveHonestSelect(
+        playerCommitment,
+        roundRandomness,
+        playerRandomness,
+        cardPlayed
+    );
+
+    let res, err;
+    [res, err] = await handleAsync(
+        contract.write.playCard([cardPlayed, proof])
+    );
+    if (!res || err) {
+        console.error("Error submitting to contract:", err);
+        console.error("Groth16 inputs:", {
+            playerCommitment: playerCommitment.toString(),
+            roundRandomness: roundRandomness.toString(),
+            playerRandomness: playerRandomness.toString(),
+            cardPlayed: cardPlayed,
+        });
+        process.exit(1);
+    }
 }

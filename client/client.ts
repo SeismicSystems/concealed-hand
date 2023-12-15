@@ -1,5 +1,4 @@
-import crypto from "crypto";
-import { poseidon1, poseidon2 } from "poseidon-lite";
+import { poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 
 import { BN128_SCALAR_MOD, CARDS, DUMMY_VRF } from "./constants";
@@ -8,15 +7,17 @@ import {
     StartRoundEvent,
     commitRand,
     contract,
-    proveHonestSelect,
+    playerAddress,
     publicClient,
+    submitDrawProof,
 } from "./utils";
 
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
 
+const suit = process.argv[2];
+
 function constructDeck(): [string[], string[]] {
-    const suit = process.argv[2];
     if (!suit) {
         throw new Error("Please specify suit in CLI.");
     }
@@ -70,7 +71,7 @@ function listenToCardGame(
     validMoves: string[],
     playerDeck: string[],
     playerRandomness: bigint,
-    randCommit: bigint
+    playerCommitment: bigint
 ) {
     publicClient.watchEvent({
         address: contract.address,
@@ -78,30 +79,35 @@ function listenToCardGame(
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                if (
-                    process.argv[2] === "SPADES" &&
-                    log.args.roundIndex === 0n
-                ) {
-                    const roundRandomness = DUMMY_VRF[0];
-
-                    console.log("== Round 1");
-                    const seed = poseidon2([roundRandomness, playerRandomness]);
-                    const [drawValues, drawIndices] = sampleN(
-                        seed,
-                        playerDeck,
-                        DRAW_SIZE
-                    );
-                    console.log(`- Draw:`, drawValues);
-                    console.log(`- Indices:`, drawIndices);
-                    const [moveDrawIdx, moveDeckIdx] = askValidMove(
-                        drawIndices,
-                        validMoves
-                    );
-                    console.log(
-                        `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-                    );
-                    console.log("SHOULD PROVE HERE");
+                if (suit !== "SPADES" || log.args.roundIndex !== 0n) {
+                    return;
                 }
+
+                const roundRandomness = DUMMY_VRF[0];
+
+                console.log("== Round 1");
+                const seed = poseidon2([roundRandomness, playerRandomness]);
+                const [drawValues, drawIndices] = sampleN(
+                    seed,
+                    playerDeck,
+                    DRAW_SIZE
+                );
+                console.log(`- Draw:`, drawValues);
+                console.log(`- Indices:`, drawIndices);
+                const [moveDrawIdx, moveDeckIdx] = askValidMove(
+                    drawIndices,
+                    validMoves
+                );
+                console.log(
+                    `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+                );
+
+                await submitDrawProof(
+                    playerCommitment,
+                    roundRandomness,
+                    playerRandomness,
+                    moveDeckIdx
+                );
             });
         },
     });
@@ -112,7 +118,36 @@ function listenToCardGame(
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                // Do something
+                if (log.args.addr === playerAddress) {
+                    return;
+                }
+
+                const roundNumber = Number(log.args.roundIndex) + 1;
+                const roundRandomness = DUMMY_VRF[roundNumber - 1];
+
+                console.log(`== Round ${roundNumber}`);
+                const seed = poseidon2([roundRandomness, playerRandomness]);
+                const [drawValues, drawIndices] = sampleN(
+                    seed,
+                    playerDeck,
+                    DRAW_SIZE
+                );
+                console.log(`- Draw:`, drawValues);
+                console.log(`- Indices:`, drawIndices);
+                const [moveDrawIdx, moveDeckIdx] = askValidMove(
+                    drawIndices,
+                    validMoves
+                );
+                console.log(
+                    `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+                );
+
+                await submitDrawProof(
+                    playerCommitment,
+                    roundRandomness,
+                    playerRandomness,
+                    moveDeckIdx
+                );
             });
         },
     });
@@ -121,31 +156,14 @@ function listenToCardGame(
 async function playGame() {
     let [validMoves, playerDeck] = constructDeck();
 
-    let [playerRandomness, randCommit] = await commitRand();
+    let [playerRandomness, playerCommitment] = await commitRand();
 
-    listenToCardGame(validMoves, playerDeck, playerRandomness, randCommit);
-
-    // DUMMY_VRF.slice(0, N_ROUNDS).forEach((roundRandomness, i) => {
-    //     console.log(`== Round ${i + 1}`);
-    //     const seed = poseidon2([roundRandomness, playerRandomness]);
-    //     const [drawValues, drawIndices] = sampleN(seed, playerDeck, DRAW_SIZE);
-    //     console.log(`- Draw:`, drawValues);
-    //     console.log(`- Indices:`, drawIndices);
-    //     const [moveDrawIdx, moveDeckIdx] = askValidMove(
-    //         drawIndices,
-    //         validMoves
-    //     );
-    //     console.log(
-    //         `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-    //     );
-    //     proveHonestSelect(
-    //         randCommit,
-    //         roundRandomness,
-    //         playerRandomness,
-    //         moveDeckIdx
-    //     ).then((res) => console.log(res));
-    //     console.log("==");
-    // });
+    listenToCardGame(
+        validMoves,
+        playerDeck,
+        playerRandomness,
+        playerCommitment
+    );
 }
 
 playGame();

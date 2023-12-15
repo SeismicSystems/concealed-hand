@@ -133,7 +133,7 @@ contract CardGame {
                 proof.c,
                 [getPlayer().randCommit, vrf.getRand(currentRound), cardIdx]
             ),
-            "Submittted an card draw proof."
+            "Proof verification failed."
         );
         _;
     }

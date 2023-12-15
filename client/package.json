@@ -2,10 +2,11 @@
   "name": "client",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "client.ts",
+  "type": "module",
   "scripts": {
-    "devA": "ts-node client.ts SPADES",
-    "devB": "ts-node client.ts CLUBS"
+    "devA": "pnpm tsx client.ts SPADES",
+    "devB": "pnpm tsx client.ts CLUBS"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^20.10.4",
     "@types/readline-sync": "^1.4.8",
+    "tsx": "^4.6.2",
     "typescript": "^5.3.3"
   }
 }
