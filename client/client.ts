@@ -73,15 +73,17 @@ function listenToCardGame(
     playerRandomness: bigint,
     playerCommitment: bigint
 ) {
+    console.log("LISTENING FOR START ROUND");
     publicClient.watchEvent({
         address: contract.address,
         event: StartRoundEvent,
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                if (suit !== "SPADES" || log.args.roundIndex !== 0n) {
-                    return;
-                }
+                console.log("LOG", log);
+                // if (suit !== "SPADES" || log.args.roundIndex !== 0n) {
+                //     return;
+                // }
 
                 const roundRandomness = DUMMY_VRF[0];
 
@@ -118,9 +120,10 @@ function listenToCardGame(
         strict: true,
         onLogs: (logs) => {
             logs.forEach(async (log) => {
-                if (log.args.addr === playerAddress) {
-                    return;
-                }
+                console.log("LOG", log);
+                // if (log.args.addr === playerAddress) {
+                //     return;
+                // }
 
                 const roundNumber = Number(log.args.roundIndex) + 1;
                 const roundRandomness = DUMMY_VRF[roundNumber - 1];
