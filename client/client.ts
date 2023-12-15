@@ -17,6 +17,9 @@ const DRAW_SIZE = 5;
 
 const suit = process.argv[2];
 
+let validMoves: string[], playerDeck: string[];
+let playerRandomness: bigint, playerCommitment: bigint;
+
 function constructDeck(): [string[], string[]] {
     if (!suit) {
         throw new Error("Please specify suit in CLI.");
@@ -67,106 +70,48 @@ function askValidMove(
     return askValidMove(drawIndices, validMoves);
 }
 
-function listenToCardGame(
-    validMoves: string[],
-    playerDeck: string[],
-    playerRandomness: bigint,
-    playerCommitment: bigint
-) {
+async function listenForStartRound() {
     console.log("LISTENING FOR START ROUND");
     publicClient.watchEvent({
         address: contract.address,
         event: StartRoundEvent,
         strict: true,
-        onLogs: (logs) => {
-            logs.forEach(async (log) => {
-                console.log("LOG", log);
-                // if (suit !== "SPADES" || log.args.roundIndex !== 0n) {
-                //     return;
-                // }
+        onLogs: async (logs) => {
+            const roundNumber = Number(logs[0].args.roundIndex) + 1;
+            const roundRandomness = DUMMY_VRF[roundNumber - 1];
 
-                const roundRandomness = DUMMY_VRF[0];
+            console.log(`== Round ${roundNumber}`);
+            const seed = poseidon2([roundRandomness, playerRandomness]);
+            const [drawValues, drawIndices] = sampleN(
+                seed,
+                playerDeck,
+                DRAW_SIZE
+            );
+            console.log(`- Draw:`, drawValues);
+            console.log(`- Indices:`, drawIndices);
+            const [moveDrawIdx, moveDeckIdx] = askValidMove(
+                drawIndices,
+                validMoves
+            );
+            console.log(
+                `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
+            );
 
-                console.log("== Round 1");
-                const seed = poseidon2([roundRandomness, playerRandomness]);
-                const [drawValues, drawIndices] = sampleN(
-                    seed,
-                    playerDeck,
-                    DRAW_SIZE
-                );
-                console.log(`- Draw:`, drawValues);
-                console.log(`- Indices:`, drawIndices);
-                const [moveDrawIdx, moveDeckIdx] = askValidMove(
-                    drawIndices,
-                    validMoves
-                );
-                console.log(
-                    `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-                );
-
-                await submitDrawProof(
-                    playerCommitment,
-                    roundRandomness,
-                    playerRandomness,
-                    moveDeckIdx
-                );
-            });
-        },
-    });
-
-    publicClient.watchEvent({
-        address: contract.address,
-        event: PlayerMoveEvent,
-        strict: true,
-        onLogs: (logs) => {
-            logs.forEach(async (log) => {
-                console.log("LOG", log);
-                // if (log.args.addr === playerAddress) {
-                //     return;
-                // }
-
-                const roundNumber = Number(log.args.roundIndex) + 1;
-                const roundRandomness = DUMMY_VRF[roundNumber - 1];
-
-                console.log(`== Round ${roundNumber}`);
-                const seed = poseidon2([roundRandomness, playerRandomness]);
-                const [drawValues, drawIndices] = sampleN(
-                    seed,
-                    playerDeck,
-                    DRAW_SIZE
-                );
-                console.log(`- Draw:`, drawValues);
-                console.log(`- Indices:`, drawIndices);
-                const [moveDrawIdx, moveDeckIdx] = askValidMove(
-                    drawIndices,
-                    validMoves
-                );
-                console.log(
-                    `- Playing: ${drawValues[moveDrawIdx]} (index ${moveDeckIdx})`
-                );
-
-                await submitDrawProof(
-                    playerCommitment,
-                    roundRandomness,
-                    playerRandomness,
-                    moveDeckIdx
-                );
-            });
+            await submitDrawProof(
+                playerCommitment,
+                roundRandomness,
+                playerRandomness,
+                moveDeckIdx
+            );
         },
     });
 }
 
 async function playGame() {
-    let [validMoves, playerDeck] = constructDeck();
+    await listenForStartRound();
 
-    let [playerRandomness, playerCommitment] = await commitRand();
-
-    listenToCardGame(
-        validMoves,
-        playerDeck,
-        playerRandomness,
-        playerCommitment
-    );
+    [validMoves, playerDeck] = constructDeck();
+    [playerRandomness, playerCommitment] = await commitRand();
 }
 
 playGame();
