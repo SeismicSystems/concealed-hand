@@ -1,3 +1,6 @@
+export const DRAW_WASM: string = "../circuits/draw/draw.wasm";
+export const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
+
 export const CARDS = [
     "A",
     "2",
@@ -41,3 +44,5 @@ export const BN128_SCALAR_MOD =
     BigInt(
         21888242871839275222246405745257275088548364400416034343698204186575808495617
     );
+
+export const DEV_PRIVKEY = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";

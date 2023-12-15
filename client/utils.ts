@@ -1,5 +1,3 @@
-import crypto from "crypto";
-import { poseidon1 } from "poseidon-lite";
 // @ts-ignore
 import { groth16 } from "snarkjs";
 import {
@@ -12,12 +10,40 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
+import crypto from "crypto";
+
 import CardGameABI from "../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
 import deployment from "../contracts/out/deployment.json" assert { type: "json" };
 import { BN128_SCALAR_MOD } from "./constants";
+import { Groth16Proof, Groth16ProofCalldata } from "./types";
 
-const DRAW_WASM: string = "../circuits/draw/draw.wasm";
-const DRAW_ZKEY: string = "../circuits/draw/draw.zkey";
+export const EventABIs = {
+    StartRound: parseAbiItem("event StartRound(uint256 roundIndex)"),
+    PlayerMove: parseAbiItem(
+        "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx, uint256[2] proofa, uint256[2][2] proofb, uint256[2] proofc)"
+    ),
+    GameEnd: parseAbiItem("event GameEnd()"),
+};
+
+export function contractInterfaceSetup(privKey: string): [any, any] {
+    const account = privateKeyToAccount(`0x${privKey}`);
+    const walletClient = createWalletClient({
+        account,
+        chain: foundry,
+        transport: http(),
+    });
+    const publicClient = createPublicClient({
+        chain: foundry,
+        transport: http(),
+    });
+    const contract = getContract({
+        abi: CardGameABI.abi,
+        address: deployment.gameAddress as Address,
+        walletClient,
+        publicClient,
+    });
+    return [publicClient, contract];
+}
 
 /*
  * Wrapper for error handling for promises.
@@ -32,26 +58,6 @@ export async function handleAsync<T>(
         return [null, error];
     }
 }
-
-export type Groth16FullProveResult = {
-    proof: Groth16Proof;
-    publicSignals: any;
-};
-
-export type Groth16Proof = {
-    pi_a: [string, string, string];
-    pi_b: [[string, string], [string, string], [string, string]];
-    pi_c: [string, string, string];
-    protocol: string;
-    curve: string;
-};
-
-export type Groth16ProofCalldata = {
-    a: [string, string];
-    b: [[string, string], [string, string]];
-    c: [string, string];
-    input: string[];
-};
 
 export async function exportCallDataGroth16(
     prf: Groth16Proof,
@@ -76,44 +82,7 @@ export async function exportCallDataGroth16(
     };
 }
 
-export async function proveHonestSelect(
-    playerCommitment: bigint,
-    roundRandomness: bigint,
-    playerRandomness: bigint,
-    cardPlayed: number
-): Promise<Groth16ProofCalldata> {
-    const groth16Inputs = {
-        playerCommitment: playerCommitment.toString(),
-        roundRandomness: roundRandomness.toString(),
-        playerRandomness: playerRandomness.toString(),
-        cardPlayed: cardPlayed,
-    };
-
-    let proverRes: Groth16FullProveResult | null;
-    let proverErr;
-    [proverRes, proverErr] = await handleAsync(
-        groth16.fullProve(groth16Inputs, DRAW_WASM, DRAW_ZKEY)
-    );
-    if (!proverRes || proverErr) {
-        console.error(
-            "Error proving draw ZKP with input signals",
-            groth16Inputs
-        );
-        process.exit(1);
-    }
-
-    let exportRes, exportErr;
-    [exportRes, exportErr] = await handleAsync(
-        exportCallDataGroth16(proverRes.proof, proverRes.publicSignals)
-    );
-    if (!exportRes || exportErr) {
-        console.error("Error formatting proof and public signals");
-        process.exit(1);
-    }
-    return exportRes;
-}
-
-function uniformBN128Scalar(): bigint {
+export function uniformBN128Scalar(): bigint {
     let sample;
     do {
         sample = BigInt(`0x${crypto.randomBytes(32).toString("hex")}`);
@@ -121,89 +90,24 @@ function uniformBN128Scalar(): bigint {
     return sample;
 }
 
-/*
- * Contract values
- */
-const privateKey =
-    process.argv[2] === "SPADES"
-        ? "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
-        : "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
-const account = privateKeyToAccount(privateKey);
-
-const walletClient = createWalletClient({
-    account,
-    chain: foundry,
-    transport: http(),
-});
-
-export const publicClient = createPublicClient({
-    chain: foundry,
-    transport: http(),
-});
-
-export const contract = getContract({
-    abi: CardGameABI.abi,
-    address: deployment.gameAddress as Address,
-    walletClient,
-    publicClient,
-});
-
-export const EventABIs = {
-    StartRound: parseAbiItem("event StartRound(uint256 roundIndex)"),
-    PlayerMove: parseAbiItem(
-        "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx, uint256[2] proofa, uint256[2][2] proofb, uint256[2] proofc)"
-    ),
-    GameEnd: parseAbiItem("event GameEnd()"),
-};
-
-const contractCommitFunc =
-    process.argv[2] === "SPADES"
-        ? contract.write.claimPlayerA
-        : contract.write.claimPlayerB;
-
-export async function commitRand(): Promise<[bigint, bigint]> {
-    console.log("== Sampling player randomness");
-    let playerRandomness = uniformBN128Scalar();
-    let randCommitment = poseidon1([playerRandomness]);
-    console.log("- Random value:", playerRandomness);
-    console.log("- Commitment:", randCommitment);
-    console.log("==");
-
-    let res, err;
-    [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
-    if (!res || err) {
-        console.error("Error committing to randomness onchain:", err);
-        process.exit(1);
+// https://github.com/jbaylina/random_permute/blob/main/test/test.js
+function permutate(seed: bigint, arr: number[]): number[] {
+    let arrCopy: number[] = [...arr];
+    seed = seed & ((1n << 250n) - 1n);
+    for (let i = arrCopy.length; i > 0; i--) {
+        const r = Number(seed % BigInt(i));
+        [arrCopy[i - 1], arrCopy[r]] = [arrCopy[r], arrCopy[i - 1]];
+        seed = (seed - BigInt(r)) / BigInt(i);
     }
-
-    return [playerRandomness, randCommitment];
+    return arrCopy;
 }
 
-export async function submitDrawProof(
-    playerCommitment: bigint,
-    roundRandomness: bigint,
-    playerRandomness: bigint,
-    cardPlayed: number
-) {
-    const proof = await proveHonestSelect(
-        playerCommitment,
-        roundRandomness,
-        playerRandomness,
-        cardPlayed
-    );
-
-    let res, err;
-    [res, err] = await handleAsync(
-        contract.write.playCard([cardPlayed, proof])
-    );
-    if (!res || err) {
-        console.error("Error submitting to contract:", err);
-        console.error("Groth16 inputs:", {
-            playerCommitment: playerCommitment.toString(),
-            roundRandomness: roundRandomness.toString(),
-            playerRandomness: playerRandomness.toString(),
-            cardPlayed: cardPlayed,
-        });
-        process.exit(1);
-    }
+export function sampleN(
+    seed: bigint,
+    arr: string[],
+    sz: number
+): [string[], number[]] {
+    const indices = [...Array(arr.length).keys()];
+    const permuteTrunc = permutate(seed, indices).slice(0, sz);
+    return [permuteTrunc.map((idx) => arr[idx]), permuteTrunc];
 }
