@@ -87,10 +87,13 @@ async function proveHonestSelect(
         cardPlayed: cardPlayed,
     };
 
+    const startTime = Date.now();
     let [proverRes, proverErr]: [Groth16FullProveResult | null, any] =
         await handleAsync(
             groth16.fullProve(groth16Inputs, DRAW_WASM, DRAW_ZKEY)
         );
+    const endTime = Date.now();
+    console.log(`- Time it took to generate ZKP: ${endTime - startTime}ms`);
     if (!proverRes || proverErr) {
         console.error(
             "ERROR: Could not generate draw ZKP for input signals:",
