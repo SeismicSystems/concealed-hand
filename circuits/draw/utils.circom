@@ -1,5 +1,8 @@
 include "../node_modules/circomlib/circuits/comparators.circom";
 
+/*
+ * Creates an array of size <SZ>, where each element is set to the index.
+ */
 template IncrementingArray(SZ) {
     signal output indices[SZ];
 
@@ -8,6 +11,9 @@ template IncrementingArray(SZ) {
     }
 }
 
+/*
+ * Truncates an array.
+ */
 template Truncate(ARRAY_SZ, TRUNC_SZ) {
     signal input arr[ARRAY_SZ];
     signal output out[TRUNC_SZ];
@@ -17,6 +23,9 @@ template Truncate(ARRAY_SZ, TRUNC_SZ) {
     }
 }
 
+/*
+ * Checks whether an element is contained in a given array.
+ */
 template ArrayInclusion(ARRAY_SZ) {
     signal input element;
     signal input arr[ARRAY_SZ];

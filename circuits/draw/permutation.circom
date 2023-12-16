@@ -1,9 +1,6 @@
 /*
-random_permute.circom
-Circom circuit to permute an array from a hash value.
-
-License
-MIT Copyright (c) 2022 Jordi Baylina
+ * Permute an array given a random seed. Written by Jordi Baylina. 
+ * Source: https://github.com/jbaylina/random_permute/blob/main/circuits/permutation.circom
 */
 pragma circom 2.1.0;
 
