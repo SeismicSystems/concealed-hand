@@ -31,13 +31,13 @@ contract CardGame {
         uint256[2] c;
     }
 
-    Player A;
-    Player B;
-    uint256 nRounds;
-    uint256 currentRound;
-    uint256 deckSize;
-    DummyVRF vrf;
-    IDrawVerifier drawVerifier;
+    Player public A;
+    Player public B;
+    uint256 public nRounds;
+    uint256 public currentRound;
+    uint256 public deckSize;
+    DummyVRF public vrf;
+    IDrawVerifier public drawVerifier;
 
     event StartRound(uint256 roundIndex);
     event PlayerMove(

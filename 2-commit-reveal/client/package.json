@@ -1,0 +1,28 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.ts",
+  "type": "module",
+  "scripts": {
+    "devA": "pnpm tsx client.ts SPADES 59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+    "devB": "pnpm tsx client.ts CLUBS 5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+    "listen": "pnpm tsx listen.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "poseidon-lite": "^0.2.0",
+    "readline-sync": "^1.4.10",
+    "snarkjs": "^0.7.2",
+    "viem": "^1.19.15"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@types/readline-sync": "^1.4.8",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}
