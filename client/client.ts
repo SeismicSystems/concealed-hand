@@ -3,8 +3,8 @@ import { groth16 } from "snarkjs";
 import { poseidon1, poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 
-import { CARDS, DUMMY_VRF, DRAW_WASM, DRAW_ZKEY } from "./constants";
-import { Groth16FullProveResult, Groth16ProofCalldata } from "./types";
+import { CARDS, DUMMY_VRF, DRAW_WASM, DRAW_ZKEY } from "./lib/constants";
+import { Groth16FullProveResult, Groth16ProofCalldata } from "./lib/types";
 import {
     EventABIs,
     contractInterfaceSetup,
@@ -12,7 +12,7 @@ import {
     handleAsync,
     sampleN,
     uniformBN128Scalar,
-} from "./utils";
+} from "./lib/utils";
 
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;

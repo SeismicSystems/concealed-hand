@@ -1,5 +1,5 @@
-import { EventABIs, contractInterfaceSetup } from "./utils";
-import { DEV_PRIVKEY } from "./constants";
+import { EventABIs, contractInterfaceSetup } from "./lib/utils";
+import { DEV_PRIVKEY } from "./lib/constants";
 
 /*
  * Prints all DrawContract events to stdout as they come.

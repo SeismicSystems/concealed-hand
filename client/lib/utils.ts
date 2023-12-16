@@ -12,8 +12,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import crypto from "crypto";
 
-import CardGameABI from "../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
-import deployment from "../contracts/out/deployment.json" assert { type: "json" };
+import CardGameABI from "../../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
+import deployment from "../../contracts/out/deployment.json" assert { type: "json" };
 import { BN128_SCALAR_MOD } from "./constants";
 import { Groth16Proof, Groth16ProofCalldata } from "./types";
 
