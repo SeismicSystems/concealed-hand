@@ -8,6 +8,7 @@ import {
     http,
     parseAbiItem,
 } from "viem";
+import { poseidon1 } from "poseidon-lite";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import crypto from "crypto";
@@ -86,6 +87,20 @@ export async function exportCallDataGroth16(
         c: argv.slice(6, 8) as [string, string],
         input: argv.slice(8),
     };
+}
+
+/*
+ * Samples a random value in BN128's scalar field and computes its 
+ * poseidon hash (the commitment).
+ */
+export function computeRand(): [bigint, bigint] {
+    console.log("== Sampling player randomness");
+    let playerRandomness = uniformBN128Scalar();
+    let randCommitment = poseidon1([playerRandomness]);
+    console.log("- Random value:", playerRandomness);
+    console.log("- Commitment:", randCommitment);
+    console.log("==");
+    return [playerRandomness, randCommitment];
 }
 
 /*

@@ -1,6 +1,6 @@
 // @ts-ignore
 import { groth16 } from "snarkjs";
-import { poseidon1, poseidon2 } from "poseidon-lite";
+import { poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
 
 import { CARDS, DUMMY_VRF, DRAW_WASM, DRAW_ZKEY } from "./lib/constants";
@@ -8,6 +8,7 @@ import { Groth16FullProveResult, Groth16ProofCalldata } from "./lib/types";
 import {
     EventABIs,
     contractInterfaceSetup,
+    computeRand,
     exportCallDataGroth16,
     handleAsync,
     sampleN,
@@ -29,20 +30,6 @@ function constructDeck(suit: string): [string[], string[]] {
         return `${suit}-${card}`;
     });
     return [validMoves, playerDeck];
-}
-
-/*
- * Samples a random value in BN128's scalar field and its corresponding 
- * commitment. 
- */
-function computeRand(): [bigint, bigint] {
-    console.log("== Sampling player randomness");
-    let playerRandomness = uniformBN128Scalar();
-    let randCommitment = poseidon1([playerRandomness]);
-    console.log("- Random value:", playerRandomness);
-    console.log("- Commitment:", randCommitment);
-    console.log("==");
-    return [playerRandomness, randCommitment];
 }
 
 /*

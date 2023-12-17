@@ -6,6 +6,7 @@ import {
     createWalletClient,
     getContract,
     http,
+    keccak256,
     parseAbiItem,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -63,40 +64,20 @@ export async function handleAsync<T>(
 }
 
 /*
- * Rearrange a raw Groth16 proof into the format the Solidity verifier expects.
+ * Samples a random 256 bit value computes its keccak hash (the commitment).
  */
-export async function exportCallDataGroth16(
-    prf: Groth16Proof,
-    pubSigs: any
-): Promise<Groth16ProofCalldata> {
-    const proofCalldata: string = await groth16.exportSolidityCallData(
-        prf,
-        pubSigs
+export function computeRand(): [bigint, bigint] {
+    console.log("== Sampling player randomness");
+    let playerRandomness = BigInt(
+        `0x${crypto.randomBytes(32).toString("hex")}`
     );
-    const argv: string[] = proofCalldata
-        .replace(/["[\]\s]/g, "")
-        .split(",")
-        .map((x: string) => BigInt(x).toString());
-    return {
-        a: argv.slice(0, 2) as [string, string],
-        b: [
-            argv.slice(2, 4) as [string, string],
-            argv.slice(4, 6) as [string, string],
-        ],
-        c: argv.slice(6, 8) as [string, string],
-        input: argv.slice(8),
-    };
-}
-
-/*
- * Uniform random sample from BN128's scalar field.
- */
-export function uniformBN128Scalar(): bigint {
-    let sample;
-    do {
-        sample = BigInt(`0x${crypto.randomBytes(32).toString("hex")}`);
-    } while (sample >= BN128_SCALAR_MOD);
-    return sample;
+    let randCommitment = BigInt(
+        keccak256(`0x${playerRandomness.toString(16)}`)
+    );
+    console.log("- Random value:", playerRandomness);
+    console.log("- Commitment:", randCommitment);
+    console.log("==");
+    return [playerRandomness, randCommitment];
 }
 
 /*

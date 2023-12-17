@@ -1,14 +1,11 @@
-// @ts-ignore
-import { groth16 } from "snarkjs";
-import { poseidon1, poseidon2 } from "poseidon-lite";
 import * as readlineSync from "readline-sync";
+import crypto from "crypto";
 
-import { CARDS, DUMMY_VRF, DRAW_WASM, DRAW_ZKEY } from "./lib/constants";
-import { Groth16FullProveResult, Groth16ProofCalldata } from "./lib/types";
+import { CARDS, DUMMY_VRF } from "./lib/constants";
 import {
     EventABIs,
     contractInterfaceSetup,
-    exportCallDataGroth16,
+    computeRand,
     handleAsync,
     sampleN,
     uniformBN128Scalar,
@@ -18,9 +15,9 @@ const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
 
 /*
-  * A player's deck is all 13 cards in their suit. A move is an index in the  
-  * range [0, 13).
-  */
+ * A player's deck is all 13 cards in their suit. A move is an index in the
+ * range [0, 13).
+ */
 function constructDeck(suit: string): [string[], string[]] {
     const validMoves = Array.from({ length: DRAW_SIZE }, (_, i) =>
         i.toString()
@@ -32,21 +29,7 @@ function constructDeck(suit: string): [string[], string[]] {
 }
 
 /*
- * Samples a random value in BN128's scalar field and its corresponding 
- * commitment. 
- */
-function computeRand(): [bigint, bigint] {
-    console.log("== Sampling player randomness");
-    let playerRandomness = uniformBN128Scalar();
-    let randCommitment = poseidon1([playerRandomness]);
-    console.log("- Random value:", playerRandomness);
-    console.log("- Commitment:", randCommitment);
-    console.log("==");
-    return [playerRandomness, randCommitment];
-}
-
-/*
- * Players must commit to their chosen randomness on-chain before the game 
+ * Players must commit to their chosen randomness on-chain before the game
  * begins.
  */
 async function sendRandCommitment(
@@ -71,7 +54,7 @@ async function sendRandCommitment(
 }
 
 /*
- * Computes a ZKP that attests to the statement "this card is in the draw 
+ * Computes a ZKP that attests to the statement "this card is in the draw
  * consistent with the round randomness and my committed randomness".
  */
 async function proveHonestSelect(
@@ -115,7 +98,7 @@ async function proveHonestSelect(
 
 /*
  * Publish the chosen card (action) to the chain, along with a ZKP that it is
- * part of the round's draw. 
+ * part of the round's draw.
  */
 async function submitMove(
     contract: any,
@@ -147,7 +130,7 @@ async function submitMove(
 }
 
 /*
- * Ask for player's move via CLI. 
+ * Ask for player's move via CLI.
  */
 function askValidMove(
     drawIndices: number[],
@@ -197,7 +180,7 @@ function playRound(
 
 /*
  * Participate whenever the contract emits an event signaling that a round has
- * begun. 
+ * begun.
  */
 function attachGameLoop(
     publicClient: any,
@@ -240,23 +223,24 @@ function attachGameLoop(
 }
 
 (async () => {
-    const suit = process.argv[2], privKey = process.argv[3];
+    const suit = process.argv[2],
+        privKey = process.argv[3];
     if (!suit || !privKey) {
         throw new Error("Please specify suit and dev private key in CLI.");
     }
 
-    let [validMoves, playerDeck] = constructDeck(suit);
-    let [publicClient, contract] = contractInterfaceSetup(privKey);
+    // let [validMoves, playerDeck] = constructDeck(suit);
+    // let [publicClient, contract] = contractInterfaceSetup(privKey);
     let [playerRandomness, playerCommitment] = computeRand();
-    attachGameLoop(
-        publicClient,
-        contract,
-        playerDeck,
-        N_ROUNDS,
-        DRAW_SIZE,
-        playerCommitment,
-        playerRandomness,
-        validMoves
-    );
-    sendRandCommitment(contract, suit, playerRandomness, playerCommitment);
+    // attachGameLoop(
+    //     publicClient,
+    //     contract,
+    //     playerDeck,
+    //     N_ROUNDS,
+    //     DRAW_SIZE,
+    //     playerCommitment,
+    //     playerRandomness,
+    //     validMoves
+    // );
+    // sendRandCommitment(contract, suit, playerRandomness, playerCommitment);
 })();
