@@ -18,11 +18,14 @@ import {
 const N_ROUNDS = 3;
 const DRAW_SIZE = 5;
 
+let suit, privKey;
+let publicClient, contract;
+
 /*
   * A player's deck is all 13 cards in their suit. A move is an index in the  
   * range [0, 13).
   */
-function constructDeck(suit: string): [string[], string[]] {
+function constructDeck(): [string[], string[]] {
     const validMoves = Array.from({ length: DRAW_SIZE }, (_, i) =>
         i.toString()
     );
@@ -37,8 +40,6 @@ function constructDeck(suit: string): [string[], string[]] {
  * begins.
  */
 async function sendRandCommitment(
-    contract: any,
-    suit: string,
     playerRandomness: bigint,
     randCommitment: bigint
 ): Promise<[bigint, bigint]> {
@@ -104,7 +105,6 @@ async function proveHonestSelect(
  * part of the round's draw. 
  */
 async function submitMove(
-    contract: any,
     playerCommitment: bigint,
     roundRandomness: bigint,
     playerRandomness: bigint,
@@ -185,8 +185,6 @@ function playRound(
  * begun. 
  */
 function attachGameLoop(
-    publicClient: any,
-    contract: any,
     playerDeck: string[],
     nRounds: number,
     drawSize: number,
@@ -212,7 +210,6 @@ function attachGameLoop(
                     validMoves
                 );
                 await submitMove(
-                    contract,
                     playerCommitment,
                     roundRandomness,
                     playerRandomness,
@@ -225,17 +222,16 @@ function attachGameLoop(
 }
 
 (async () => {
-    const suit = process.argv[2], privKey = process.argv[3];
+    suit = process.argv[2];
+    privKey = process.argv[3];
     if (!suit || !privKey) {
         throw new Error("Please specify suit and dev private key in CLI.");
     }
 
-    let [validMoves, playerDeck] = constructDeck(suit);
-    let [publicClient, contract] = contractInterfaceSetup(privKey);
+    let [validMoves, playerDeck] = constructDeck();
+    [publicClient, contract] = contractInterfaceSetup(privKey);
     let [playerRandomness, playerCommitment] = computeRand();
     attachGameLoop(
-        publicClient,
-        contract,
         playerDeck,
         N_ROUNDS,
         DRAW_SIZE,
@@ -243,5 +239,5 @@ function attachGameLoop(
         playerRandomness,
         validMoves
     );
-    sendRandCommitment(contract, suit, playerRandomness, playerCommitment);
+    sendRandCommitment(playerRandomness, playerCommitment);
 })();

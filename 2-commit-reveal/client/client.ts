@@ -183,7 +183,8 @@ function attachGameLoop(
 }
 
 (async () => {
-    (suit = process.argv[2]), (privKey = process.argv[3]);
+    suit = process.argv[2];
+    privKey = process.argv[3];
     if (!suit || !privKey) {
         throw new Error("Please specify suit and dev private key in CLI.");
     }
