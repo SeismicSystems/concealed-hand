@@ -9,7 +9,7 @@ contract CardGame {
         uint256 cardIdx;
     }
     struct Player {
-        bytes32 randCommit;
+        uint256 randCommit;
         address addr;
         Move[] moves;
     }
@@ -49,7 +49,7 @@ contract CardGame {
      * A wallet can claim a role in the game by sending in a commitment to their
      * randomness. Moves are initialized to (false, 0) for all rounds.
      */
-    function claimPlayer(Player storage player, bytes32 randCommit_) internal {
+    function claimPlayer(Player storage player, uint256 randCommit_) internal {
         require(player.addr == address(0), "Player has already been claimed.");
         player.randCommit = randCommit_;
         player.addr = msg.sender;
@@ -62,14 +62,14 @@ contract CardGame {
     /*
      * Claim the role of Player A.
      */
-    function claimPlayerA(bytes32 randCommit_) external {
+    function claimPlayerA(uint256 randCommit_) external {
         claimPlayer(A, randCommit_);
     }
 
     /*
      * Claim the role of Player B.
      */
-    function claimPlayerB(bytes32 randCommit_) external {
+    function claimPlayerB(uint256 randCommit_) external {
         claimPlayer(B, randCommit_);
     }
 
@@ -110,7 +110,7 @@ contract CardGame {
 
     modifier validOpening(Player storage player, uint256 preimage) {
         require(
-            keccak256(abi.encodePacked(preimage)) == player.randCommit,
+            uint256(keccak256(abi.encodePacked(preimage))) == player.randCommit,
             "Preimage must match up to commitment sent in before game."
         );
         _;
@@ -191,7 +191,7 @@ contract CardGame {
     }
 
     function revealPlayerB(uint256 preimage) external {
-        revealRand(A, preimage);
+        revealRand(B, preimage);
     }
 
     /*

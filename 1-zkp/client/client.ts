@@ -49,7 +49,7 @@ async function sendRandCommitment(
 
     let [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
     if (!res || err) {
-        console.error("Error committing to randomness onchain:", err);
+        console.error("Error committing to randomness on-chain:", err);
         process.exit(1);
     }
 

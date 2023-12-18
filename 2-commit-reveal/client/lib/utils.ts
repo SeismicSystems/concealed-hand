@@ -16,15 +16,14 @@ import crypto from "crypto";
 import CardGameABI from "../../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
 import deployment from "../../contracts/out/deployment.json" assert { type: "json" };
 import { BN128_SCALAR_MOD } from "./constants";
-import { Groth16Proof, Groth16ProofCalldata } from "./types";
 
 export const EventABIs = {
     StartRound: parseAbiItem("event StartRound(uint256 roundIndex)"),
     PlayerMove: parseAbiItem(
-        "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx, uint256[2] proofa, uint256[2][2] proofb, uint256[2] proofc)"
+        "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx)"
     ),
     GameEnd: parseAbiItem("event GameEnd()"),
-    SampleN: parseAbiItem("event SampleN(uint256 c1, uint256 c2, uint256 c3, uint256 c4, uint256 c5)")
+    VerifiedDraws: parseAbiItem("event VerifiedDraws(address playerAddr)");
 };
 
 /*
@@ -101,7 +100,7 @@ export function sampleN(
  */
 function permutate(seed: bigint, arr: number[]): number[] {
     let arrCopy: number[] = [...arr];
-    seed = seed & ((1n << 250n) - 1n);
+    seed = seed & ((BigInt(1) << BigInt(250)) - BigInt(1));
     for (let i = arrCopy.length; i > 0; i--) {
         const r = Number(seed % BigInt(i));
         [arrCopy[i - 1], arrCopy[r]] = [arrCopy[r], arrCopy[i - 1]];
