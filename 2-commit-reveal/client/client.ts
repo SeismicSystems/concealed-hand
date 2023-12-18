@@ -1,3 +1,4 @@
+import { encodePacked, keccak256 } from "viem";
 import * as readlineSync from "readline-sync";
 import crypto from "crypto";
 
@@ -43,57 +44,13 @@ async function sendRandCommitment(
             ? contract.write.claimPlayerA
             : contract.write.claimPlayerB;
 
-    let res, err;
-    [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
+    let [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
     if (!res || err) {
         console.error("Error committing to randomness onchain:", err);
         process.exit(1);
     }
 
     return [playerRandomness, randCommitment];
-}
-
-/*
- * Computes a ZKP that attests to the statement "this card is in the draw
- * consistent with the round randomness and my committed randomness".
- */
-async function proveHonestSelect(
-    playerCommitment: bigint,
-    roundRandomness: bigint,
-    playerRandomness: bigint,
-    cardPlayed: number
-): Promise<Groth16ProofCalldata> {
-    const groth16Inputs = {
-        playerCommitment: playerCommitment.toString(),
-        roundRandomness: roundRandomness.toString(),
-        playerRandomness: playerRandomness.toString(),
-        cardPlayed: cardPlayed,
-    };
-
-    const startTime = Date.now();
-    let [proverRes, proverErr]: [Groth16FullProveResult | null, any] =
-        await handleAsync(
-            groth16.fullProve(groth16Inputs, DRAW_WASM, DRAW_ZKEY)
-        );
-    const endTime = Date.now();
-    console.log(`- Time it took to generate ZKP: ${endTime - startTime}ms`);
-    if (!proverRes || proverErr) {
-        console.error(
-            "ERROR: Could not generate draw ZKP for input signals:",
-            groth16Inputs
-        );
-        process.exit(1);
-    }
-
-    let exportRes, exportErr;
-    [exportRes, exportErr] = await handleAsync(
-        exportCallDataGroth16(proverRes.proof, proverRes.publicSignals)
-    );
-    if (!exportRes || exportErr) {
-        console.error("ERROR: Could not format proof:", proverRes);
-        process.exit(1);
-    }
-    return exportRes;
 }
 
 /*
@@ -114,8 +71,7 @@ async function submitMove(
         cardPlayed
     );
 
-    let res, err;
-    [res, err] = await handleAsync(
+    let [res, err] = await handleAsync(
         contract.write.playCard([cardPlayed, proof])
     );
     if (!res || err) {
@@ -168,7 +124,12 @@ function playRound(
     playerRandomness: bigint,
     validMoves: string[]
 ): number {
-    const seed = poseidon2([roundRandomness, playerRandomness]);
+    const seed = keccak256(
+        encodePacked(
+            ["uint256", "uint256"],
+            [roundRandomness, playerRandomness]
+        )
+    );
     const [drawValues, drawIndices] = sampleN(seed, playerDeck, drawSize);
     console.log(`- Your draw:`, drawValues);
 
@@ -229,8 +190,8 @@ function attachGameLoop(
         throw new Error("Please specify suit and dev private key in CLI.");
     }
 
-    // let [validMoves, playerDeck] = constructDeck(suit);
-    // let [publicClient, contract] = contractInterfaceSetup(privKey);
+    let [validMoves, playerDeck] = constructDeck(suit);
+    let [publicClient, contract] = contractInterfaceSetup(privKey);
     let [playerRandomness, playerCommitment] = computeRand();
     // attachGameLoop(
     //     publicClient,

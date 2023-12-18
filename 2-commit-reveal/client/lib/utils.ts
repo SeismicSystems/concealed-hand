@@ -24,6 +24,7 @@ export const EventABIs = {
         "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx, uint256[2] proofa, uint256[2][2] proofb, uint256[2] proofc)"
     ),
     GameEnd: parseAbiItem("event GameEnd()"),
+    SampleN: parseAbiItem("event SampleN(uint256 c1, uint256 c2, uint256 c3, uint256 c4, uint256 c5)")
 };
 
 /*

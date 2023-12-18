@@ -47,8 +47,7 @@ async function sendRandCommitment(
             ? contract.write.claimPlayerA
             : contract.write.claimPlayerB;
 
-    let res, err;
-    [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
+    let [res, err] = await handleAsync(contractCommitFunc([randCommitment]));
     if (!res || err) {
         console.error("Error committing to randomness onchain:", err);
         process.exit(1);
@@ -118,8 +117,7 @@ async function submitMove(
         cardPlayed
     );
 
-    let res, err;
-    [res, err] = await handleAsync(
+    let [res, err] = await handleAsync(
         contract.write.playCard([cardPlayed, proof])
     );
     if (!res || err) {
