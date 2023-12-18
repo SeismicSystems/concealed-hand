@@ -26,7 +26,7 @@ Now the only thing left to do is to verify that players don't cheat with their r
 Players must commit to their randomness at the beginning of the game, before seeing any VRF outputs. This is done with a hiding commitment $commit_j = Poseidon(rplayer_j)$. The protocol can then verify that they stick to this committed value in two ways:
 
 1. ZKP. Whenever a player puts down an action, they must submit a ZKP that asserts the statement "this card is in the draw consistent with the round randomness and my committed randomness".
-2. Commit-Reveal. At the end of the game, the player can reveal their committed randomness, and the protocol can go back and replay all moves with this knowledge, confirming that all actions were within valid draws. Note that we can use $keccak()$ here for the commitment since there are no circuits involved.
+2. Commit-Reveal. The player can open their commitment (tell the chain what their random value is) at the end of the game. Then, the protocol can go back and replay all moves with this knowledge, confirming that all actions were within valid draws. Note that we can use $keccak()$ here for the commitment since there are no circuits involved.
 
 Both have their costs and benefits. For the majority of cases, we strongly recommend going with #2. We've implemented both in this repository for completeness (lots of code repetition between the two). All moves are on-chain for a dummy card game and all proofs are real. 
 

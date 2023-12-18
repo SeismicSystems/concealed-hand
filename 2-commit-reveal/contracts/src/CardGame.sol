@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./DummyVRF.sol";
+import "./Utils.sol";
 
 contract CardGame {
     struct Move {
@@ -108,6 +109,10 @@ contract CardGame {
         }
     }
 
+    /*
+     * Checks whether the claimed preimage is the valid opening to the player's
+     * commitment.
+     */
     modifier validOpening(Player storage player, uint256 preimage) {
         require(
             uint256(keccak256(abi.encodePacked(preimage))) == player.randCommit,
@@ -116,6 +121,9 @@ contract CardGame {
         _;
     }
 
+    /*
+     * Checks whether all rounds have concluded.
+     */
     modifier gameFinished() {
         require(
             currentRound >= nRounds,
@@ -124,74 +132,30 @@ contract CardGame {
         _;
     }
 
-    function sampleN(uint256 seed) public view returns (uint256[] memory) {
-        uint256[] memory indices = new uint256[](deckSize);
-        for (uint256 i = 0; i < deckSize; i++) {
-            indices[i] = i;
-        }
-        uint256[] memory permuted = permutate(seed, indices);
-        uint256[] memory permutedTrunc = new uint256[](drawSize);
-        for (uint256 i = 0; i < drawSize; i++) {
-            permutedTrunc[i] = permuted[i];
-        }
-        return permutedTrunc;
-    }
-
-    function permutate(
-        uint256 seed,
-        uint256[] memory arr
-    ) public pure returns (uint256[] memory) {
-        uint256[] memory arrCopy = new uint256[](arr.length);
-        for (uint i = 0; i < arr.length; i++) {
-            arrCopy[i] = arr[i];
-        }
-        seed = seed & ((1 << 250) - 1);
-        for (uint i = arrCopy.length; i > 0; i--) {
-            uint r = uint(seed % i);
-            uint temp = arrCopy[i - 1];
-            arrCopy[i - 1] = arrCopy[r];
-            arrCopy[r] = temp;
-            seed = (seed - r) / i;
-        }
-        return arrCopy;
-    }
-
-    function arrayContains(
-        uint256 element,
-        uint256[] memory arr
-    ) public pure returns (bool) {
-        for (uint i = 0; i < arr.length; i++) {
-            if (arr[i] == element) {
-                return true;
-            }
-        }
-        return false;
-    }
-
+    /*
+     * Players open their random commitments at the end of the game. Contract
+     * checks that all their moves were consistent with this randomness.
+     */
     function revealRand(
-        Player storage player,
         uint256 preimage
-    ) internal validOpening(player, preimage) gameFinished {
+    ) external validOpening(getPlayer(), preimage) gameFinished {
+        Player memory player = getPlayer();
         for (uint i = 0; i < player.moves.length; i++) {
             Move memory move = player.moves[i];
             bytes32 seed = keccak256(
                 abi.encodePacked(vrf.getRand(i), preimage)
             );
-            uint256[] memory draw = sampleN(uint256(seed));
+            uint256[] memory draw = Utils.sampleN(
+                uint256(seed),
+                deckSize,
+                drawSize
+            );
             require(
-                arrayContains(move.cardIdx, draw),
-                "Found a move not included in a draw consistent with player randomness."
+                Utils.arrayContains(move.cardIdx, draw),
+                "Found a move inconsistent with player randomness."
             );
         }
         emit VerifiedDraws(player.addr);
-    }
-
-    function revealPlayerA(uint256 preimage) external {
-        revealRand(A, preimage);
-    }
-
-    function revealPlayerB(uint256 preimage) external {
-        revealRand(B, preimage);
     }
 
     /*

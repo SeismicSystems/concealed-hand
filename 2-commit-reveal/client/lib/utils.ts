@@ -1,5 +1,3 @@
-// @ts-ignore
-import { groth16 } from "snarkjs";
 import {
     Address,
     createPublicClient,
@@ -15,7 +13,6 @@ import crypto from "crypto";
 
 import CardGameABI from "../../contracts/out/CardGame.sol/CardGame.json" assert { type: "json" };
 import deployment from "../../contracts/out/deployment.json" assert { type: "json" };
-import { BN128_SCALAR_MOD } from "./constants";
 
 export const EventABIs = {
     StartRound: parseAbiItem("event StartRound(uint256 roundIndex)"),
@@ -23,7 +20,7 @@ export const EventABIs = {
         "event PlayerMove(uint256 roundIndex, address addr, uint256 cardIdx)"
     ),
     GameEnd: parseAbiItem("event GameEnd()"),
-    VerifiedDraws: parseAbiItem("event VerifiedDraws(address playerAddr)");
+    VerifiedDraws: parseAbiItem("event VerifiedDraws(address playerAddr)")
 };
 
 /*

@@ -1,11 +1,4 @@
 /*
- * Witness generator and proving key for draw ZKP.
- */
-const DRAW_OUT_PATH: string = "../circuits/draw/out/";
-export const DRAW_WASM: string = `${DRAW_OUT_PATH}/draw.wasm`;
-export const DRAW_ZKEY: string = `${DRAW_OUT_PATH}/draw.zkey`;
-
-/*
  * Numbering for a regular deck of cards.
  */
 export const CARDS: string[] = [
@@ -50,14 +43,6 @@ export const DUMMY_VRF: bigint[] = [
     8853615892004739248301911492504354270979465178652091900727587971731505885626n,
     11146017350875199963721940307936436613051410031268524273908573452631649515732n,
 ];
-
-/*
- * Size of BN128's scalar field.
- */
-export const BN128_SCALAR_MOD: bigint =
-    BigInt(
-        21888242871839275222246405745257275088548364400416034343698204186575808495617
-    );
 
 /*
  * Anvil account private key that we use for development. Never do something

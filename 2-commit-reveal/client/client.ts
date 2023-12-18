@@ -9,7 +9,6 @@ import {
     computeRand,
     handleAsync,
     sampleN,
-    uniformBN128Scalar,
 } from "./lib/utils";
 
 const N_ROUNDS = 3;
@@ -55,8 +54,7 @@ async function sendRandCommitment(
 }
 
 /*
- * Publish the chosen card (action) to the chain, along with a ZKP that it is
- * part of the round's draw.
+ * Publish the chosen card (action) to the chain.
  */
 async function submitMove(
     playerCommitment: bigint,
@@ -90,7 +88,8 @@ function askValidMove(
 }
 
 /*
- *
+ * Once all rounds have concluded, player reveals randomness so the chain can
+ * verify their claimed draws.
  */
 async function checkGameEnd(
     roundNumber: number,
@@ -100,13 +99,11 @@ async function checkGameEnd(
     if (roundNumber <= nRounds) {
         return;
     }
-    console.log("== Game ended, revealing randomness.");
-    const randRevealFunc =
-        suit === "SPADES"
-            ? contract.write.revealPlayerA
-            : contract.write.revealPlayerB;
 
-    let [res, err] = await handleAsync(randRevealFunc([playerRandomness]));
+    console.log("== Game ended, revealing randomness.");
+    let [res, err] = await handleAsync(
+        contract.write.revealRand([playerRandomness])
+    );
     if (!res || err) {
         console.error("Error revealing randomness on-chain:", err);
         process.exit(1);
@@ -163,11 +160,7 @@ function attachGameLoop(
             logs.forEach(async (log) => {
                 const roundNumber = Number(log.args.roundIndex) + 1;
                 const roundRandomness = DUMMY_VRF[roundNumber - 1];
-                await checkGameEnd(
-                    roundNumber,
-                    nRounds,
-                    playerRandomness
-                );
+                await checkGameEnd(roundNumber, nRounds, playerRandomness);
 
                 console.log(`== Round ${roundNumber}`);
                 let cardPlayed = playRound(
@@ -190,8 +183,7 @@ function attachGameLoop(
 }
 
 (async () => {
-    suit = process.argv[2],
-    privKey = process.argv[3];
+    (suit = process.argv[2]), (privKey = process.argv[3]);
     if (!suit || !privKey) {
         throw new Error("Please specify suit and dev private key in CLI.");
     }
